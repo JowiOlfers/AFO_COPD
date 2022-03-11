@@ -30,16 +30,17 @@ s2=s[which(s$control.vs.severe==1),]
 array3=array[,which(s$mild.vs.severe==1)]
 s3=s[which(s$mild.vs.severe==1),]
 
-#array1= contains the groups control and mild COPD (n=46)
-#array2= contains the groups control and severe COPD (n=136)
-#array3= contains the groups mild and severe COPD (n=138)
+#array1= contains the groups mild COPD and control (n=46)
+#array2= contains the groups severe COPD and control (n=136)
+#array3= contains the groups severe COPD and control (n=138)
+
 
 
 
 
 # EdgeR: disease
 
-################################## array2 - Severe COPD vs. healthy controls
+################################## array2 - Severe COPD vs. controls
 expressionDataToUse= array2
 samplesToUse=s2
 
@@ -49,6 +50,8 @@ smoking=as.factor(samplesToUse$smoking)
 age=as.numeric(samplesToUse$age)
 gender=as.factor(samplesToUse$gender)
 packyears=as.numeric(samplesToUse$packyears)
+
+
 
 #######
 total_nasaldata_DGEL <- DGEList(expressionDataToUse)
@@ -60,8 +63,6 @@ nasaldata_DGEL$samples
 #write.table(nasaldata_DGEL,file="nasal rawcounts.csv",sep="\t",quote=F)
 #y <- rownames(nasaldata_DGEL) 
 #write.table(y,file="ENG_genes.txt",sep="\t")
-
-
 
 
 ################Normalization
@@ -124,6 +125,7 @@ rownames(tT1)=tT1[,1]
 #standard an error due to DUPLICATES:'ENSG00000254876', 'ENSG00000276085
 names(tT1)[1] <- "ENSGid"
 tT1 <- tT1 [!(is.na(tT1$hgnc_symbol) | tT1$hgnc_symbol == ""), ]
+tT1 <- tT1 [!(tT1$hgnc_symbol == "CCL3L3"), ]
 write.table(tT1, "nasal-severeCOPD.vs.control.txt")
 
 tT2=tT1[which(tT1$FDR<0.05), ]
@@ -186,8 +188,8 @@ p <- ggscatter(tT1, x = "logFC", y = "logFDR",
                font.label = 8, 
                repel = T,
                xlab = "log2FoldChange", ylab = "-log10(FDR)") + theme_base() +
-  geom_hline(yintercept = -log10(0.05),linetype="dashed")+
-  geom_vline(xintercept = c(-2,0,2), linetype="dashed")
+  geom_hline(yintercept = -log10(0.01),linetype="dashed")+
+  geom_vline(xintercept = c(-2, 2), linetype="dashed")
 p
 
 ggsave(filename = "Volcano-WC-severevscontrol-FDR0.01.png", width=21,height=21,units="cm",dpi=600)
@@ -227,8 +229,8 @@ pp <- ggscatter(tT1, x = "logFC", y = "logPValue",
                 font.label = 8, 
                 repel = T,
                 xlab = "log2FoldChange", ylab = "-log10(PValue)") + theme_base() +
-  geom_hline(yintercept = -log10(0.05),linetype="dashed")+
-  geom_vline(xintercept = c(-2,0,2),linetype="dashed")
+  geom_hline(yintercept = -log10(0.001),linetype="dashed")+
+  geom_vline(xintercept = c(-2, 2),linetype="dashed")
 pp
 ggsave(filename = "Volcano-WC-severevscontrol-PValue.png", width=25,height=25,units="cm",dpi=600)
 ggsave(filename = "gene_diff-severevscontrol-PValue.pdf", width=25,height=25,units="cm")
@@ -266,8 +268,14 @@ write.table(tT223a, "Nasal_top10.DEGs_severe.vs.controls-FDR0.05.csv")
 
 #select top 20 up and down regulated genes with FDR < 0.01 and FC > 4 or <-4
 tT31=tT3[which(tT3$logFC >= 2),] 
+dim (tT31)
+
 tT32=tT3[which(tT3$logFC <= -2), ]
+dim (tT32)
+
 tT33 <- rbind (tT31, tT32)
+dim (tT33)
+
 
 tT31 = arrange (tT31, desc(logFC))
 tT31a = head(tT31[,1:7], 10)
@@ -278,10 +286,10 @@ write.table(tT33a, "Nasal_top20.DEGs_severe.vs.controls-FDR0.01.csv")
 
 #select top 10 up and down regulated genes with FDR < 0.01 and 
 tT31 = arrange (tT31, desc(logFC))
-tT321a = head(tT21[,1:7], 5)
-tT32 = arrange (tT22, desc(-logFC))
-tT322a = head(tT22[,1:7], 5)
-tT323a <- rbind (tT221a, tT222a)
+tT321a = head(tT31[,1:7], 5)
+tT32 = arrange (tT32, desc(-logFC))
+tT322a = head(tT32[,1:7], 5)
+tT323a <- rbind (tT321a, tT322a)
 write.table(tT323a, "Nasal_top10.DEGs_severe.vs.controls-FDR0.01.csv")
 
 
@@ -298,7 +306,7 @@ normalized_counts.FDR <- merge(tT33, normalized_counts2, by="ENSGid" )
 normalized_counts.FDRa <- merge(tT33a, normalized_counts2, by="ENSGid" )
 
 
-######normalized_counts.FDR - tT23
+######normalized_counts.FDR
 #error: row.names duplicate 'POLR2J4'and. 'TBCE'.
 normalized_counts.FDR [normalized_counts.FDR$hgnc_symbol == "TBCE",]
 normalized_counts.FDR$hgnc_symbol [normalized_counts.FDR$ENSGid == "ENSG00000284770"] <- "TBCE2"
@@ -351,15 +359,15 @@ ph <- pheatmap(data,
               border="white",  
               color=colorRampPalette(c("navy", "white", "red"))(100),
               border_color=NA, 
-              cellwidth = 6,cellheight = 12, 
+              cellwidth = 9,cellheight = 20, 
               cluster_cols = F, 
               cluster_rows = T,
               show_rownames = T, 
               show_colnames = F,
               legend = T,   
               legend_breaks = -4:4, 
-              fontsize = 10,
-              fontsize_row = 11, 
+              fontsize = 12,
+              fontsize_row = 12, 
               fontsize_col = 10,
-              filename = "Heatmap_nasal_severe.vs.healthy_FDR-0.01.png",dpi=600)
+              filename = "Heatmap_nasal_severevscontrol_FDR-0.01.png",dpi=600)
 
