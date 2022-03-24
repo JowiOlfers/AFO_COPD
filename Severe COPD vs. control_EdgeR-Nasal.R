@@ -14,8 +14,8 @@ library("heatmap3")
 library("gplots")
 library("ggfortify")
 
-array=read.table("nasal rawcounts.csv",sep = ",",header=T,check.names=F)
-s=read.csv("nasal clinical data1.csv", sep=";",header=T,check.names=F)
+array=read.table("nasal rawcounts.csv",sep = ";",header=T,check.names=F)
+s=read.csv("nasal clinical data.csv", sep=";",header=T,check.names=F)
 
 row.names(array)=array[,1]
 array=array[,-1]
@@ -31,38 +31,64 @@ array3=array[,which(s$mild.vs.severe==1)]
 s3=s[which(s$mild.vs.severe==1),]
 
 #array1= contains the groups mild COPD and control (n=46)
-#array2= contains the groups severe COPD and control (n=136)
-#array3= contains the groups severe COPD and control (n=138)
-
+#array2= contains the groups severe COPD and control (n=135)
+#array3= contains the groups severe COPD and control (n=137)
 
 
 
 
 # EdgeR: disease
 
-################################## array2 - Severe COPD vs. controls
+################################### array2 - Severe COPD vs. controls
 expressionDataToUse= array2
 samplesToUse=s2
 
-#create factors
+
+##########create factors
 group=as.factor(samplesToUse$group)
 smoking=as.factor(samplesToUse$smoking)
 age=as.numeric(samplesToUse$age)
 gender=as.factor(samplesToUse$gender)
 packyears=as.numeric(samplesToUse$packyears)
+years.cessation=as.numeric(samplesToUse$years.of.cessation)
+
+
+###replace years.cessation NA with average value of corresponding group
+df = data.frame(years.cessation, group)
+df0 <- subset(df, group == "0")
+df2 <- subset(df, group == "2")
+
+
+#calculate average of group 0 and 2
+dfx <- df[!(is.na(df$years.cessation)), ]
+
+dfx0 <- subset(dfx, group == "0")
+mean.cessation_0 <- mean(dfx0$years.cessation)
+print (mean.cessation_0)
+
+dfx2 <- subset(dfx, group == "2")
+mean.cessation_2 <- mean(dfx2$years.cessation)
+print (mean.cessation_2)
+
+
+#replace NA with average cessation of group
+df0[is.na(df0)]<- mean.cessation_0
+df2[is.na(df2)]<- mean.cessation_2
+df_na.rm <- rbind(df0,df2)
+
+#create years.cessation factor without NA
+years.of.cessation <- as.numeric(df_na.rm$years.cessation)
 
 
 
-#######
+######List and filter on expression
 total_nasaldata_DGEL <- DGEList(expressionDataToUse)
 keep <- filterByExpr(total_nasaldata_DGEL,group=group)
 nasaldata_DGEL <- total_nasaldata_DGEL[keep,, keep.lib.sizes=FALSE]
 dim(nasaldata_DGEL)
 nasaldata_DGEL$samples
 
-#write.table(nasaldata_DGEL,file="nasal rawcounts.csv",sep="\t",quote=F)
-#y <- rownames(nasaldata_DGEL) 
-#write.table(y,file="ENG_genes.txt",sep="\t")
+
 
 
 ################Normalization
@@ -79,8 +105,9 @@ plotMDS(nasaldata_DGEL)
 
 
 
+
 ##############Differential expression analysis
-design <- model.matrix(~group + age + gender + smoking + packyears)
+design <- model.matrix(~group + age + gender + packyears + years.of.cessation)
 nasaldata_DGEL <- estimateDisp(nasaldata_DGEL, design)
 plotBCV(nasaldata_DGEL)
 
@@ -88,6 +115,7 @@ plotBCV(nasaldata_DGEL)
 fit <- glmFit(nasaldata_DGEL, design)
 lrt <- glmLRT(fit, coef = 2)
 results <- topTags(lrt,n=nrow(nasaldata_DGEL))
+
 
 #plotMeanVar(nasaldata_DGEL, show.raw=TRUE, show.tagwise=TRUE, show.binned=TRUE)
 
@@ -151,7 +179,6 @@ write.table(tT6, "nasal-severeCOPD.vs.control_P0.001.txt")
 
 
 
-
 ###########volcano plot
 library(ggpubr)
 library(ggthemes)
@@ -160,10 +187,10 @@ library(ggthemes)
 ################### FDR 0.01 selected genes
 tT1$logFDR <- -log10(tT1$FDR)
 tT1$Group <- "No diff"
-tT1$Group[which((tT1$FDR < 0.01)&(tT1$logFC > 2))] = "Up"
-tT1$Group[which((tT1$FDR < 0.01)&(tT1$logFC < -2))] = "Down"
+tT1$Group[which((tT1$FDR < 0.01)&(tT1$logFC > 1))] = "Up"
+tT1$Group[which((tT1$FDR < 0.01)&(tT1$logFC < -1))] = "Down"
 
-#amount of DEG with FDR < 0.01 and LogFC > 2 of < -2
+#amount of DEG with FDR < 0.01 and LogFC > 1 of < -1
 table(tT1$Group)
 
 tT1$label = ""
@@ -189,7 +216,7 @@ p <- ggscatter(tT1, x = "logFC", y = "logFDR",
                repel = T,
                xlab = "log2FoldChange", ylab = "-log10(FDR)") + theme_base() +
   geom_hline(yintercept = -log10(0.01),linetype="dashed")+
-  geom_vline(xintercept = c(-2, 2), linetype="dashed")
+  geom_vline(xintercept = c(-1, 1), linetype="dashed")
 p
 
 ggsave(filename = "Volcano-WC-severevscontrol-FDR0.01.png", width=21,height=21,units="cm",dpi=600)
@@ -201,8 +228,8 @@ ggsave(filename = "gene_diff.severevcontrol-FDR0.01.pdf", width=21,height=21,uni
 
 tT1$logPValue <- -log10(tT1$PValue)
 tT1$GroupP <- "No diff"
-tT1$GroupP [which((tT1$PValue < 0.001)&(tT1$logFC > 2))] = "Up"
-tT1$GroupP [which((tT1$PValue < 0.001)&(tT1$logFC < -2))] = "Down"
+tT1$GroupP [which((tT1$PValue < 0.001)&(tT1$logFC > 1))] = "Up"
+tT1$GroupP [which((tT1$PValue < 0.001)&(tT1$logFC < -1))] = "Down"
 
 #amount of DEG with Pvalue < 0.001 and LogFC > 0 of < 0
 table(tT1$Group)
@@ -230,7 +257,7 @@ pp <- ggscatter(tT1, x = "logFC", y = "logPValue",
                 repel = T,
                 xlab = "log2FoldChange", ylab = "-log10(PValue)") + theme_base() +
   geom_hline(yintercept = -log10(0.001),linetype="dashed")+
-  geom_vline(xintercept = c(-2, 2),linetype="dashed")
+  geom_vline(xintercept = c(-1, 1),linetype="dashed")
 pp
 ggsave(filename = "Volcano-WC-severevscontrol-PValue.png", width=25,height=25,units="cm",dpi=600)
 ggsave(filename = "gene_diff-severevscontrol-PValue.pdf", width=25,height=25,units="cm")
@@ -239,16 +266,16 @@ ggsave(filename = "gene_diff-severevscontrol-PValue.pdf", width=25,height=25,uni
 
 
 
-
 ######Create data.frame with normalized expression for genes with FDR sig. DEGs
 
 library(dplyr)
-
-#select top 20 up and down regulated genes with FDR < 0.05 and FC > 4 or <-4
-tT21=tT2[which(tT2$logFC >= 2),] 
-tT22=tT2[which(tT2$logFC <= -2), ]
+#select up and down regulated genes with FDR < 0.05 and FC > 2 or < -2
+tT21=tT2[which(tT2$logFC >= 1),]
+tT22=tT2[which(tT2$logFC <= -1), ]
 tT23 <- rbind (tT21, tT22)
 
+
+#select top 20 - FDR < 0.05
 tT21 = arrange (tT21, desc(logFC))
 tT21a = head(tT21[,1:7], 10)
 tT22 = arrange (tT22, desc(-logFC))
@@ -256,7 +283,7 @@ tT22a = head(tT22[,1:7], 10)
 tT23a <- rbind (tT21a, tT22a)
 write.table(tT23a, "Nasal_top20.DEGs_severe.vs.controls-FDR0.05.csv")
 
-#select top 10 up and down regulated genes with FDR < 0.05
+#select top 10 - FDR < 0.05
 tT21 = arrange (tT21, desc(logFC))
 tT221a = head(tT21[,1:7], 5)
 tT22 = arrange (tT22, desc(-logFC))
@@ -266,17 +293,21 @@ write.table(tT223a, "Nasal_top10.DEGs_severe.vs.controls-FDR0.05.csv")
 
 
 
-#select top 20 up and down regulated genes with FDR < 0.01 and FC > 4 or <-4
-tT31=tT3[which(tT3$logFC >= 2),] 
+#select up and down regulated genes with FDR < 0.01 and FC > 2 or < -2
+tT31=tT3[which(tT3$logFC >= 1),] 
 dim (tT31)
+write.table(tT31, "nasal_up-DEGs_severe.vs.controls-FDR0.01FC.csv")
 
-tT32=tT3[which(tT3$logFC <= -2), ]
+tT32=tT3[which(tT3$logFC <= -1), ]
 dim (tT32)
+write.table(tT32, "nasal_down-DEGs_severe.vs.controls-FDR0.01FC.csv")
 
 tT33 <- rbind (tT31, tT32)
 dim (tT33)
+write.table(tT33, "nasal_allDEGs_severe.vs.controls-FDR0.01FC.csv")
 
 
+#select top 20 FDR < 0.01 and FC > 2 or < -2
 tT31 = arrange (tT31, desc(logFC))
 tT31a = head(tT31[,1:7], 10)
 tT32 = arrange (tT32, desc(-logFC))
@@ -284,13 +315,14 @@ tT32a = head(tT32[,1:7], 10)
 tT33a <- rbind (tT31a, tT32a)
 write.table(tT33a, "Nasal_top20.DEGs_severe.vs.controls-FDR0.01.csv")
 
-#select top 10 up and down regulated genes with FDR < 0.01 and 
+#select top 10 FDR < 0.01 and FC > 2 or < -2
 tT31 = arrange (tT31, desc(logFC))
 tT321a = head(tT31[,1:7], 5)
 tT32 = arrange (tT32, desc(-logFC))
 tT322a = head(tT32[,1:7], 5)
 tT323a <- rbind (tT321a, tT322a)
 write.table(tT323a, "Nasal_top10.DEGs_severe.vs.controls-FDR0.01.csv")
+
 
 
 
@@ -343,11 +375,12 @@ library(ggplot2)
 data <- read.table("nasal-normalized_counts.FDRa-0.01.severevscontrol.csv",sep=",")
 
 table (s2$group)
-annotation_col = data.frame(Group = factor(c(rep("Non-COPD", 22),rep("Severe COPD", 114))))
+annotation_col = data.frame(Group = factor(c(rep("Non-COPD", 22),rep("Severe COPD", 113))))
 rownames(annotation_col)
 colnames(data)
 rownames(annotation_col) <- colnames(data)
 head(annotation_col)
+
 
 
 ph <- pheatmap(data,

@@ -16,8 +16,8 @@ library("ggfortify")
 
 
 
-array=read.table("nasal rawcounts.csv",sep = ",",header=T,check.names=F)
-s=read.csv("nasal clinical data1.csv", sep=";",header=T,check.names=F)
+array=read.table("nasal rawcounts.csv",sep = ";",header=T,check.names=F)
+s=read.csv("nasal clinical data.csv", sep=";",header=T,check.names=F)
 
 row.names(array)=array[,1]
 array=array[,-1]
@@ -51,6 +51,26 @@ smoking=as.factor(samplesToUse$smoking)
 age=as.numeric(samplesToUse$age)
 gender=as.factor(samplesToUse$gender)
 packyears=as.numeric(samplesToUse$packyears)
+years.cessation=as.numeric(samplesToUse$years.of.cessation)
+
+
+###replace years.cessation NA with average value of corresponding group
+df = data.frame(years.cessation, group)
+
+#calculate average of group 0
+dfx <- df[!(is.na(df$years.cessation)), ]
+dfx0 <- subset(dfx, group == "0")
+mean.cessation_0 <- mean(dfx0$years.cessation)
+print (mean.cessation_0)
+
+#replace NA with average cessation of group
+df[is.na(df)]<- mean.cessation_0
+
+#create years.cessation factor without NA
+years.of.cessation <- as.numeric(df$years.cessation)
+print(years.of.cessation)
+
+
 
 #######
 total_nasaldata_DGEL <- DGEList(expressionDataToUse)
@@ -58,10 +78,6 @@ keep <- filterByExpr(total_nasaldata_DGEL,group=group)
 nasaldata_DGEL <- total_nasaldata_DGEL[keep,, keep.lib.sizes=FALSE]
 dim(nasaldata_DGEL)
 nasaldata_DGEL$samples
-
-#write.table(nasaldata_DGEL,file="DGEL_nasal.raw counts.csv",sep="\t",quote=F)
-#y <- row.names(nasaldata_DGEL) 
-#write.table(y,file="ENG_genes.txt",sep="\t")
 
 
 
@@ -81,7 +97,7 @@ plotMDS(nasaldata_DGEL)
 
 
 ##############Differential expression analysis
-design <- model.matrix(~group + age + gender + packyears)
+design <- model.matrix(~group + age + gender + packyears + years.of.cessation)
 nasaldata_DGEL <- estimateDisp(nasaldata_DGEL, design)
 plotBCV(nasaldata_DGEL)
 
@@ -215,7 +231,7 @@ tT1 <- tT1[order(tT1$PValue),]
 
 #select that the top 10 DEG show names in the plot
 up_geneP <- head(tT1$hgnc_symbol[which(tT1$GroupP == "Up")],10)
-down_geneP <- head(tT1$hgnc_symbol[which(tT1$GroupP == "Down")],10)
+down_geneP <- head(tT1$hgnc_symbol[which(tT1$GroupP == "Down")],12)
 
 #present top 10 up and down regulated genes 
 up_geneP
@@ -240,6 +256,29 @@ ggsave(filename = "gene_diff-mildvscontrol-PValue.pdf", width=25,height=25,units
 
 
 
+#select up and down regulated genes with P < 0.001 and FC > 2 or < -2
+tT61=tT6[which(tT6$logFC > 0),] 
+dim (tT61)
+write.table(tT61, "nasal_up-DEGs_mild.vs.controls-P0.001FC.csv")
+
+tT62=tT6[which(tT6$logFC < 0), ]
+dim (tT62)
+write.table(tT63, "nasal_down-DEGs_mild.vs.controls-P0.001FC.csv")
+
+tT63 <- rbind (tT61, tT62)
+dim (tT63)
+write.table(tT63, "nasal_allDEGs_mild.vs.controls-P0.001FC.csv")
+
+#select top 20
+library(dplyr)
+
+tT61 = arrange (tT61, desc(logFC))
+tT61a = head(tT61[,1:7], 10)
+tT62 = arrange (tT62, desc(-logFC))
+tT62a = head(tT62[,1:7], 10)
+tT63a <- rbind (tT61a, tT62a)
+write.table(tT63a, "Nasal_top20.DEGs_mild.vs.controls-P0.001.csv")
+
 
 
 ########Create data.frame with normalized expression for genes with significant FC
@@ -253,8 +292,6 @@ row.names(normalized_counts.P0.001) <- normalized_counts.P0.001$hgnc_symbol
 normalized_counts.P0.001$LR <- normalized_counts.P0.001$ENSGid <- normalized_counts.P0.001$logFC <- normalized_counts.P0.001$logCPM <- normalized_counts.P0.001$FDR <- normalized_counts.P0.001$PValue <- normalized_counts.P0.001$hgnc_symbol <- NULL 
 
 write.table(normalized_counts.P0.001,file="nasal-normalized_counts.P0.001.mildvscontrol.csv",sep=",")
-
-
 
 
 

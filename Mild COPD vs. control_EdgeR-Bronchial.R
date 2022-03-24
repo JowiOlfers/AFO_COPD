@@ -14,7 +14,7 @@ library("heatmap3")
 library("gplots")
 library("ggfortify")
 
-array=read.table("bronchial_rawcounts.csv",sep = ",",header=T,check.names=F)
+array=read.table("bronchial_rawcounts.csv",sep = ";",header=T,check.names=F)
 s=read.csv("bronchial clinical data.csv", sep=";",header=T,check.names=F)
 
 row.names(array)=array[,1]
@@ -48,6 +48,25 @@ smoking=as.factor(samplesToUse$smoking)
 age=as.numeric(samplesToUse$age)
 gender=as.factor(samplesToUse$gender)
 packyears=as.numeric(samplesToUse$packyears)
+years.cessation=as.numeric(samplesToUse$years.of.cessation)
+
+
+###replace years.cessation NA with average value of corresponding group
+df = data.frame(years.cessation, group)
+
+#calculate average of group 0
+dfx <- df[!(is.na(df$years.cessation)), ]
+dfx0 <- subset(dfx, group == "0")
+mean.cessation_0 <- mean(dfx0$years.cessation)
+print (mean.cessation_0)
+
+#replace NA with average cessation of group
+df[is.na(df)]<- mean.cessation_0
+
+#create years.cessation factor without NA
+years.of.cessation <- as.numeric(df$years.cessation)
+print(years.of.cessation)
+
 
 #######
 total_bronchialdata_DGEL <- DGEList(expressionDataToUse)
@@ -71,7 +90,7 @@ write.table(normalized_counts,file="bronchial-log2CPM.mildvscontrol.csv",sep=","
 
 
 ##############Differential expression analysis
-design <- model.matrix(~group + age + gender + packyears)
+design <- model.matrix(~group + age + gender + packyears + years.of.cessation)
 bronchialdata_DGEL <- estimateDisp(bronchialdata_DGEL, design)
 plotBCV(bronchialdata_DGEL)
 
@@ -229,7 +248,7 @@ ggsave(filename = "gene_diff-bronchial-mildvscontrol-PValue.pdf", width=25,heigh
 
 ######################
 
-#select top 20 up and down regulated genes with FDR < 0.01 and FC > 2 or < -2
+#select up and down regulated genes with FDR < 0.01 and FC > 2 or < -2
 
 tT31_all=tT3[which(tT3$logFC >= 1),] 
 #dim (tT31_all)
@@ -237,7 +256,8 @@ tT32_all=tT3[which(tT3$logFC <= -1), ]
 #dim (tT32_all)
 tT33_all <- rbind (tT31_all, tT32_all)
 #dim (tT33_all)
-write.table(tT33_all, "bronchial_allDEGs_mild.vs.controls-FDR0.01.csv")
+write.table(tT33_all, "bronchial_allDEGs_mild.vs.controls-FDR0.01FC.csv")
+
 
 
 #exclude bronchial severe vs control DEGs (FDR 0.01 FC > 2 or < -2)
@@ -246,17 +266,22 @@ severe_DEGs <- severevscontrol$hgnc_symbol
 overlap <- intersect(tT33_all$hgnc_symbol, severe_DEGs)
 tT33 <- tT33_all[ ! tT33_all$hgnc_symbol %in% overlap,]
 dim (tT33)
+write.table(tT33, "bronchial_all-excluded-DEGs_mild.vs.controls-FDR0.01FC.csv")
+
 
 tT31 =tT33 [which(tT33$logFC >= 1),] 
 dim (tT31)
+write.table(tT31, "bronchial_excluded-up-DEGs_mild.vs.controls-FDR0.01FC.csv")
+
 
 tT32 =tT33[which(tT33$logFC <= -1), ]
 dim (tT32)
+write.table(tT32, "bronchial_excluded-down-DEGs_mild.vs.controls-FDR0.01FC.csv")
+
 
 
 
 #select top 20 up and down regulated genes with FDR < 0.01 and FC > 2 or < -2
-
 library(dplyr)
 
 tT31 = arrange (tT31, desc(logFC))
@@ -331,7 +356,7 @@ ph <- pheatmap(data,
               legend = T,   
               legend_breaks = -4:4, 
               fontsize = 10,
-              fontsize_row = 11, 
+              fontsize_row = 10, 
               fontsize_col = 10,
               filename = "Heatmap_bronchial_mild.vs.control_FDR0.01.png",dpi=600)
 

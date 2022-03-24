@@ -14,7 +14,7 @@ library("heatmap3")
 library("gplots")
 library("ggfortify")
 
-array=read.table("bronchial_rawcounts.csv",sep = ",",header=T,check.names=F)
+array=read.table("bronchial_rawcounts.csv",sep = ";",header=T,check.names=F)
 s=read.csv("bronchial clinical data.csv", sep=";",header=T,check.names=F)
 
 row.names(array)=array[,1]
@@ -37,7 +37,6 @@ s3=s[which(s$severe.vs.mild==1),]
 
 # EdgeR: disease
 
-
 ################################## array1 - Mild COPD vs. non-COPD
 expressionDataToUse= array2
 samplesToUse=s2
@@ -48,6 +47,37 @@ smoking=as.factor(samplesToUse$smoking)
 age=as.numeric(samplesToUse$age)
 gender=as.factor(samplesToUse$gender)
 packyears=as.numeric(samplesToUse$packyears)
+years.cessation=as.numeric(samplesToUse$years.of.cessation)
+
+
+
+###replace years.cessation NA with average value of corresponding group
+df = data.frame(years.cessation, group)
+df0 <- subset(df, group == "0")
+df2 <- subset(df, group == "2")
+
+#calculate average of group 0 and 2
+dfx <- df[!(is.na(df$years.cessation)), ]
+
+dfx0 <- subset(dfx, group == "0")
+mean.cessation_0 <- mean(dfx0$years.cessation)
+print (mean.cessation_0)
+
+dfx2 <- subset(dfx, group == "2")
+mean.cessation_2 <- mean(dfx2$years.cessation)
+print (mean.cessation_2)
+
+
+#replace NA with average cessation of group
+df0[is.na(df0)]<- mean.cessation_0
+df2[is.na(df2)]<- mean.cessation_2
+df_na.rm <- rbind(df0,df2)
+
+#create years.cessation factor without NA
+years.of.cessation <- as.numeric(df_na.rm$years.cessation)
+
+
+
 
 #######
 total_bronchialdata_DGEL <- DGEList(expressionDataToUse)
@@ -71,7 +101,7 @@ write.table(normalized_counts,file="bronchial-log2CPM.severevscontrol.csv",sep="
 
 
 ##############Differential expression analysis
-design <- model.matrix(~group + age + gender + packyears + smoking)
+design <- model.matrix(~group + age + gender + packyears + years.of.cessation)
 bronchialdata_DGEL <- estimateDisp(bronchialdata_DGEL, design)
 plotBCV(bronchialdata_DGEL)
 
@@ -227,7 +257,7 @@ ggsave(filename = "gene_diff-bronchial-severevscontrol-PValue.pdf", width=25,hei
 
 #####################
 
-#select top 20 up and down regulated genes with FDR < 0.01 and FC > 2 or < -2
+#select the up and down regulated genes with FDR < 0.01 and FC > 2 or < -2
 
 tT31_all=tT3[which(tT3$logFC >= 1),] 
 #dim (tT31_all)
@@ -239,18 +269,20 @@ write.table(tT33_all, "bronchial_allDEGs_severe.vs.controls-FDR0.01FC.csv")
 
 
 #exclude bronchial mild  vs control DEGs (FDR 0.01 FC > 2 or < -2)
-mildvscontrol <- read.table("bronchial_allDEGs_mild.vs.controls-FDR0.01.csv")
+mildvscontrol <- read.table("bronchial_allDEGs_mild.vs.controls-FDR0.01FC.csv")
 mild_DEGs <- mildvscontrol$hgnc_symbol
 overlap <- intersect(tT33_all$hgnc_symbol, mild_DEGs)
 tT33 <- tT33_all[ ! tT33_all$hgnc_symbol %in% overlap,]
 dim (tT33)
+write.table(tT33, "bronchial_all-excluded-DEGs_severe.vs.controls-FDR0.01FC.csv")
 
 tT31 =tT33 [which(tT33$logFC >= 1),] 
 dim (tT31)
+write.table(tT31, "bronchial_excluded-up-DEGs_severe.vs.controls-FDR0.01FC.csv")
 
 tT32 =tT33[which(tT33$logFC <= -1), ]
 dim (tT32)
-
+write.table(tT32, "bronchial_excluded-down-DEGs_severe.vs.controls-FDR0.01FC.csv")
 
 
 
@@ -304,7 +336,7 @@ library(ggplot2)
 data <- read.table("bronchial-normalized_counts.FDRa0.01.severevscontrol.csv",sep=",")
 
 table (s2$group)
-annotation_col = data.frame(Group = factor(c(rep("Non-COPD", 23), rep("Severe COPD", 123))))
+annotation_col = data.frame(Group = factor(c(rep("Non-COPD", 23), rep("Severe COPD", 122))))
 rownames(annotation_col)
 colnames(data)
 rownames(annotation_col) <- colnames(data)
