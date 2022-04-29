@@ -1,25 +1,3 @@
-<<<<<<< Updated upstream
-library("DESeq2")
-
-if (!require("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-
-BiocManager::install("limma")
-####
-
-library("edgeR")
-library("ggplot2")
-library("ggrepel")
-library("biomaRt")
-library("heatmap3")
-library("gplots")
-library("ggfortify")
-
-
-
-array=read.table("nasal rawcounts.csv",sep = ";",header=T,check.names=F)
-s=read.csv("nasal clinical data.csv", sep=";",header=T,check.names=F)
-=======
 library (limma)
 library(edgeR)
 library(DESeq2)
@@ -47,35 +25,13 @@ x <- readr::read_csv(
 array <- data.frame (x)
 
 y <- readr::read_csv(
-  file.path(data.dir, "nasal clinical data.csv"))
+  file.path(data.dir, "nasal clinical data_CD.csv"))
 s <- data.frame (y)
->>>>>>> Stashed changes
 
 row.names(array)=array[,1]
 array=array[,-1]
 array=array[,s$SAMID]
 
-<<<<<<< Updated upstream
-array1=array[,which(s$control.vs.mild==1)]
-s1=s[which(s$control.vs.mild==1),]
-
-array2=array[,which(s$control.vs.severe==1)]
-s2=s[which(s$control.vs.severe==1),]
-
-array3=array[,which(s$mild.vs.severe==1)]
-s3=s[which(s$mild.vs.severe==1),]
-
-#array1= contains groups control and mild COPD (n=46)
-#array2= contains groups control and severe COPD (n=136)
-#array3= contains groups mild and severe COPD (n=138)
-
-
-
-
-# EdgeR: disease
-
-################################## array1 - Mild vs. non-COPD
-=======
 
 array1=array[,which(s$mild.vs.control==1)]
 s1=s[which(s$mild.vs.control==1),]
@@ -95,7 +51,6 @@ s3=s[which(s$severe.vs.mild==1),]
 #EdgeR: disease
 
 ################################## array1 - Mild vs. control
->>>>>>> Stashed changes
 expressionDataToUse= array1
 samplesToUse=s1
 
@@ -106,6 +61,15 @@ age=as.numeric(samplesToUse$age)
 gender=as.factor(samplesToUse$gender)
 packyears=as.numeric(samplesToUse$packyears)
 years.cessation=as.numeric(samplesToUse$years.of.cessation)
+
+#CD method: CIBERSORT
+#proportion_dendritic=as.numeric(samplesToUse$proportion_ciber_Dendritic)
+#proportion_goblet1N=as.numeric(samplesToUse$proportion_ciber_Goblet_1N)
+
+#CD method: NNLS
+#proportion_basal=as.numeric(samplesToUse$proportion_nnls_Basal)
+#proportion_fibro=as.numeric(samplesToUse$proportion_nnls_Fibroblasts)
+#proportion_goblet1N=as.numeric(samplesToUse$proportion_nnls_Goblet_1N)
 
 
 ###replace years.cessation NA with average value of corresponding group
@@ -119,42 +83,18 @@ print (mean.cessation_0)
 
 #replace NA with average cessation of group
 df[is.na(df)]<- mean.cessation_0
-<<<<<<< Updated upstream
-
-#create years.cessation factor without NA
-=======
->>>>>>> Stashed changes
 years.of.cessation <- as.numeric(df$years.cessation)
 print(years.of.cessation)
 
 
 
-<<<<<<< Updated upstream
-#######
-=======
 #List and filter on expression
->>>>>>> Stashed changes
 total_nasaldata_DGEL <- DGEList(expressionDataToUse)
 keep <- filterByExpr(total_nasaldata_DGEL,group=group)
 nasaldata_DGEL <- total_nasaldata_DGEL[keep,, keep.lib.sizes=FALSE]
 dim(nasaldata_DGEL)
 nasaldata_DGEL$samples
 
-<<<<<<< Updated upstream
-
-
-################Normalization
-nasaldata_DGEL <- calcNormFactors(nasaldata_DGEL, method="TMM")
-nasaldata_DGEL$samples
-
-#count per million (cpm) read, also called normalized count
-normalized_counts <- cpm(nasaldata_DGEL, log = TRUE)
-write.table(normalized_counts,file="nasal-log2CPM.mildvscontrol.txt",sep="\t",quote=F)
-write.table(normalized_counts,file="nasal-log2CPM.mildvscontrol.csv",sep=",")
-
-plotMDS(nasaldata_DGEL)
-
-=======
 ################Normalization - TMM
 nasaldata_DGEL <- calcNormFactors(nasaldata_DGEL, method="TMM")
 nasaldata_DGEL$samples
@@ -167,7 +107,6 @@ readr::write_csv(normalized_counts,
   file = file.path (results.dir, "nasal-log2CPM.mildvscontrol.csv"))
 readr::write_csv(normalized_counts, 
   file = file.path (results.dir, "nasal-log2CPM.mildvscontrol.txt"))
->>>>>>> Stashed changes
 
 
 
@@ -175,43 +114,11 @@ readr::write_csv(normalized_counts,
 ##############Differential expression analysis
 design <- model.matrix(~group + age + gender + packyears + years.of.cessation)
 nasaldata_DGEL <- estimateDisp(nasaldata_DGEL, design)
-<<<<<<< Updated upstream
-plotBCV(nasaldata_DGEL)
-=======
 #plotBCV(nasaldata_DGEL)
->>>>>>> Stashed changes
 
 fit <- glmFit(nasaldata_DGEL, design)
 lrt <- glmLRT(fit, coef = 2)
 results <- topTags(lrt,n=nrow(nasaldata_DGEL))
-<<<<<<< Updated upstream
-
-#plotMeanVar(nasaldata_DGEL, show.raw=TRUE, show.tagwise=TRUE, show.binned=TRUE)
-
-
-
-tT1=cbind(results$table,row.names(results$table))
-
-mart = useEnsembl(biomart="ENSEMBL_MART_ENSEMBL",
-                  dataset="hsapiens_gene_ensembl")
-
-genesID = as.character(rownames(tT1))
-G_list = getBM(
-  filters = "ensembl_gene_id",
-  attributes = c(
-    "ensembl_gene_id",
-    "hgnc_symbol"
-  ),
-  values = genesID,
-  mart = mart
-)
-G_list=as.matrix(G_list)
-
-
-tT1=merge(
-  x = tT1,
-  y = G_list,
-=======
 #plotMeanVar(nasaldata_DGEL, show.raw=TRUE, show.tagwise=TRUE, show.binned=TRUE)
 
 
@@ -255,24 +162,12 @@ dplyr::group_by(hgnc_symbol) %>%
 tT1=merge(
   x = tT1,
   y = geneData,
->>>>>>> Stashed changes
   all.x = T,
   all.y = F,
   by.x = "row.names(results$table)",
   by.y ="ensembl_gene_id")
 
 rownames(tT1)=tT1[,1]
-<<<<<<< Updated upstream
-#standard an error due to DUPLICATES:'ENSG00000254876', 'ENSG00000276085
-names(tT1)[1] <- "ENSGid"
-tT1 <- tT1 [!(is.na(tT1$hgnc_symbol) | tT1$hgnc_symbol == ""), ]
-tT1 <- tT1 [!(tT1$hgnc_symbol == "CCL3L3"), ]
-write.table(tT1, "Nasal-mildCOPD.vs.control.txt")
-
-tT2=tT1[which(tT1$FDR<0.05),]
-names(tT2)[1] <- "ENSGid"
-write.table(tT2, "Nasal-mildCOPD.vs.control_FDR.txt")
-=======
 #standard an error due to DUPLICATES:'ENSG00000187510', 'ENSG00000255374' and ENSG00000276085
 names(tT1)[1] <- "ENSGid"
 tT1 <- tT1 [!(is.na(tT1$hgnc_symbol) | tT1$hgnc_symbol == ""), ]
@@ -281,41 +176,11 @@ readr::write_csv(tT1, file = file.path (results.dir, "nasal-mildCOPD.vs.control.
 tT2=tT1[which(tT1$FDR<0.05),]
 names(tT2)[1] <- "ENSGid"
 readr::write_csv(tT2, file = file.path (results.dir, "nasal-mildCOPD.vs.control_FDR0.05.txt"))
->>>>>>> Stashed changes
 
 #FDR 0.25 again 0 DEG
 
 tT3=tT1[which(tT1$FDR<0.5),]
 names(tT3)[1] <- "ENSGid"
-<<<<<<< Updated upstream
-write.table(tT3, "Nasal-mildCOPD.vs.control_FDR0.5.txt")
-
-tT4=tT1[which(tT1$PValue<0.05),]
-names(tT4)[1] <- "ENSGid"
-write.table(tT4, "Nasal-mildCOPD.vs.control_P0.05.txt")
-
-tT5=tT1[which(tT1$PValue<0.01),]
-names(tT5)[1] <- "ENSGid"
-write.table(tT5, "Nasal-mildCOPD.vs.control_P0.01.txt")
-
-tT6=tT1[which(tT1$PValue<0.001),]
-names(tT6)[1] <- "ENSGid"
-write.table(tT6, "Nasal-mildCOPD.vs.control_P0.001.txt")
-
-
-
-
-
-########## Selection and presentation significant up and down regulated genes
-
-#volcano plot
-library(ggpubr)
-library(ggthemes)
-
-
-
-################### FDR 0.5 selected genes
-=======
 readr::write_csv(tT3, file = file.path (results.dir, "nasal-mildCOPD.vs.control_FDR0.5.txt"))
 
 tT4=tT1[which(tT1$PValue<0.05),]
@@ -338,7 +203,6 @@ library(ggpubr)
 library(ggthemes)
 
 ############ FDR 0.5 selected genes
->>>>>>> Stashed changes
 tT1$logFDR <- -log10(tT1$FDR)
 tT1$Group <- "No diff"
 tT1$Group[which((tT1$FDR < 0.5)&(tT1$logFC > 0))] = "Up"
@@ -360,10 +224,6 @@ down_gene
 tT1_gene <- c(as.character(up_gene), as.character(down_gene))
 tT1$label[match(tT1_gene, tT1$hgnc_symbol)] <- tT1_gene
 
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 p <- ggscatter(tT1, x = "logFC", y = "logFDR", 
           color = "Group", 
           palette = c("#2f5688","#BBBBBB","#CC0000"), 
@@ -372,19 +232,6 @@ p <- ggscatter(tT1, x = "logFC", y = "logFDR",
           font.label = 8, 
           repel = T,
           xlab = "log2FoldChange", ylab = "-log10(FDR)") + theme_base() +
-<<<<<<< Updated upstream
-  geom_hline(yintercept = -log10(0.05),linetype="dashed")+
-  geom_vline(xintercept = 0,linetype="dashed")
-p
-ggsave(filename = "Volcano-WC-mildvscontrol-FDR-0.5.png", width=21,height=21,units="cm",dpi=600)
-ggsave(filename = "gene_diff-mildvscontrol-FDR-0.5.pdf", width=21,height=21,units="cm")
-
-
-
-
-###################### Pvalue selected genes - P<0.001
-
-=======
   geom_hline(yintercept = -log10(0.5),linetype="dashed")+
   geom_vline(xintercept = 0,linetype="dashed")
 p
@@ -393,7 +240,6 @@ ggsave (filename = file.path (results.dir.img, "gene_diff-mildvscontrol-FDR-0.5.
 
 
 ###Pvalue selected genes - P<0.001
->>>>>>> Stashed changes
 tT1$logPValue <- -log10(tT1$PValue)
 tT1$GroupP <- "No diff"
 tT1$GroupP [which((tT1$PValue < 0.001)&(tT1$logFC > 0))] = "Up"
@@ -405,15 +251,9 @@ table(tT1$GroupP)
 tT1$labelP = ""
 tT1 <- tT1[order(tT1$PValue),]
 
-<<<<<<< Updated upstream
-#select that the top 10 DEG show names in the plot
-up_geneP <- head(tT1$hgnc_symbol[which(tT1$GroupP == "Up")],10)
-down_geneP <- head(tT1$hgnc_symbol[which(tT1$GroupP == "Down")],12)
-=======
 #select that the top DEG show names in the plot
 up_geneP <- head(tT1$hgnc_symbol[which(tT1$GroupP == "Up")],10)
 down_geneP <- head(tT1$hgnc_symbol[which(tT1$GroupP == "Down")],15)
->>>>>>> Stashed changes
 
 #present top 10 up and down regulated genes 
 up_geneP
@@ -430,40 +270,17 @@ p1 <- ggscatter(tT1, x = "logFC", y = "logPValue",
                font.label = 8, 
                repel = T,
                xlab = "log2FoldChange", ylab = "-log10(PValue)") + theme_base() +
-<<<<<<< Updated upstream
-  geom_hline(yintercept = -log10(0.05),linetype="dashed")+
-  geom_vline(xintercept = 0,linetype="dashed")
-p1
-ggsave(filename = "Volcano-WC-mildvscontrol-PValue.png", width=25,height=25,units="cm",dpi=600)
-ggsave(filename = "gene_diff-mildvscontrol-PValue.pdf", width=25,height=25,units="cm")
-=======
   geom_hline(yintercept = -log10(0.001),linetype="dashed")+
   geom_vline(xintercept = 0,linetype="dashed")
 p1
 ggsave (filename = file.path (results.dir.img, "Volcano-WC-mildvscontrol-PValue.png"), width=30,height=30,units="cm",dpi=600 )
 ggsave (filename = file.path (results.dir.img, "gene_diff-mildvscontrol-PValue.pdf"), width=25,height=30,units="cm")
->>>>>>> Stashed changes
 
 
 
 #select up and down regulated genes with P < 0.001 and FC > 2 or < -2
 tT61=tT6[which(tT6$logFC > 0),] 
 dim (tT61)
-<<<<<<< Updated upstream
-write.table(tT61, "nasal_up-DEGs_mild.vs.controls-P0.001FC.csv")
-
-tT62=tT6[which(tT6$logFC < 0), ]
-dim (tT62)
-write.table(tT63, "nasal_down-DEGs_mild.vs.controls-P0.001FC.csv")
-
-tT63 <- rbind (tT61, tT62)
-dim (tT63)
-write.table(tT63, "nasal_allDEGs_mild.vs.controls-P0.001FC.csv")
-
-#select top 20
-library(dplyr)
-
-=======
 readr::write_csv(tT61, file = file.path (results.dir, "nasal_up-DEGs_mild.vs.controls-P0.001FC2.csv"))
 
 tT62=tT6[which(tT6$logFC < 0), ]
@@ -476,18 +293,12 @@ readr::write_csv(tT63, file = file.path (results.dir, "nasal_allDEGs_mild.vs.con
 
 #select top 20 - top 10 up and top 10 down regulated genes
 library(dplyr)
->>>>>>> Stashed changes
 tT61 = arrange (tT61, desc(logFC))
 tT61a = head(tT61[,1:7], 10)
 tT62 = arrange (tT62, desc(-logFC))
 tT62a = head(tT62[,1:7], 10)
 tT63a <- rbind (tT61a, tT62a)
-<<<<<<< Updated upstream
-write.table(tT63a, "Nasal_top20.DEGs_mild.vs.controls-P0.001.csv")
-
-=======
 readr::write_csv(tT63a, file = file.path (results.dir, "nasal_top20.DEGs_mild.vs.controls-P0.001.csv"))
->>>>>>> Stashed changes
 
 
 ########Create data.frame with normalized expression for genes with significant FC
@@ -499,13 +310,7 @@ normalized_counts2 <- cbind (ENSGid, d)
 normalized_counts.P0.001 <- merge(tT6, normalized_counts2, by="ENSGid" )
 row.names(normalized_counts.P0.001) <- normalized_counts.P0.001$hgnc_symbol
 normalized_counts.P0.001$LR <- normalized_counts.P0.001$ENSGid <- normalized_counts.P0.001$logFC <- normalized_counts.P0.001$logCPM <- normalized_counts.P0.001$FDR <- normalized_counts.P0.001$PValue <- normalized_counts.P0.001$hgnc_symbol <- NULL 
-<<<<<<< Updated upstream
-
-write.table(normalized_counts.P0.001,file="nasal-normalized_counts.P0.001.mildvscontrol.csv",sep=",")
-
-=======
 readr::write_csv(normalized_counts.P0.001, file = file.path (results.dir, "nasal-normalized_counts.P0.001.mildvscontrol.csv"))
->>>>>>> Stashed changes
 
 
 #####################heatmap
@@ -513,27 +318,15 @@ library(pheatmap)
 library(RColorBrewer)
 library(ggplot2)
 
-<<<<<<< Updated upstream
-data <- read.table("nasal-normalized_counts.P0.001.mildvscontrol.csv",sep=",")
-
-table (s1$group)
-annotation_col = data.frame(Group = factor(c(rep("Non-COPD", 22), rep("Mild COPD", 24))))
-rownames(annotation_col)
-=======
 table (s1$group)
 annotation_col = data.frame(Group = factor(c(rep("Non-COPD", 22), rep("Mild COPD", 24))))
 rownames(annotation_col)
 
 data <- normalized_counts.P0.001 
->>>>>>> Stashed changes
 colnames(data)
 rownames(annotation_col) <- colnames(data)
 head(annotation_col)
 
-<<<<<<< Updated upstream
-
-ph <- pheatmap(data,
-=======
 data1 <- data [,annotation_col$Group == "Non-COPD"]
 data2 <- data [,annotation_col$Group == "Mild COPD"]
 
@@ -547,7 +340,6 @@ datax <- cbind(data1, data2)
 rownames (annotation_col) <- colnames (datax)
 
 ph <- pheatmap(datax,
->>>>>>> Stashed changes
               scale="row",
               annotation_col = annotation_col,
               annotation_legend = T,
@@ -566,9 +358,5 @@ ph <- pheatmap(datax,
               fontsize = 11,
               fontsize_row = 12, 
               fontsize_col = 10,
-<<<<<<< Updated upstream
-              filename = "Heatmap_nasal_mild.vs.control_P0.001.png",dpi=600)
-=======
               filename = file.path (results.dir.img, "Heatmap_nasal_mild.vs.control_P0.001.png") ,dpi=600)
->>>>>>> Stashed changes
 

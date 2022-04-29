@@ -25,7 +25,7 @@ x <- readr::read_csv(
 array <- data.frame (x)
 
 y <- readr::read_csv(
-  file.path(data.dir, "nasal clinical data.csv"))
+  file.path(data.dir, "nasal clinical data_CD.csv"))
 s <- data.frame (y)
 
 row.names(array)=array[,1]
@@ -61,6 +61,14 @@ gender=as.factor(samplesToUse$gender)
 packyears=as.numeric(samplesToUse$packyears)
 years.cessation=as.numeric(samplesToUse$years.of.cessation)
 
+#CD method: CIBERSORT
+#proportion_dendritic=as.numeric(samplesToUse$proportion_ciber_Dendritic)
+#proportion_goblet1N=as.numeric(samplesToUse$proportion_ciber_Goblet_1N)
+
+#CD method: NNLS
+#proportion_basal=as.numeric(samplesToUse$proportion_nnls_Basal)
+#proportion_fibro=as.numeric(samplesToUse$proportion_nnls_Fibroblasts)
+#proportion_goblet1N=as.numeric(samplesToUse$proportion_nnls_Goblet_1N)
 
 
 ###replace years.cessation NA with average value of corresponding group
@@ -112,6 +120,7 @@ readr::write_csv(normalized_counts,
 
 ##############Differential expression analysis
 design <- model.matrix(~group + age + gender + packyears + years.of.cessation)
+#+ proportion_dendritic + proportion_goblet1N)
 nasaldata_DGEL <- estimateDisp(nasaldata_DGEL, design)
 #plotBCV(nasaldata_DGEL)
 
@@ -401,7 +410,7 @@ datax <- cbind(data1, data2)
 
 rownames (annotation_col) <- colnames (datax)
 
-ph <- pheatmap(data,
+ph <- pheatmap(datax,
               scale="row",
               annotation_col = annotation_col,
               annotation_legend = T,

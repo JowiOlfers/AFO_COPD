@@ -24,7 +24,7 @@ x <- readr::read_csv(
 array <- data.frame (x)
 
 y <- readr::read_csv(
-  file.path(data.dir, "bronchial clinical data.csv"))
+  file.path(data.dir, "bronchial clinical data_CD.csv"))
 s <- data.frame (y)
 
 
@@ -61,6 +61,14 @@ gender=as.factor(samplesToUse$gender)
 packyears=as.numeric(samplesToUse$packyears)
 years.cessation=as.numeric(samplesToUse$years.of.cessation)
 
+#CD method: CIBERSORT
+#proportion_ciliated=as.numeric(samplesToUse$proportion_ciber_Ciliated)
+#proportion_goblet=as.numeric(samplesToUse$proportion_ciber_Goblet)
+
+#CD method: NNLS
+#proportion_ciliated=as.numeric(samplesToUse$proportion_nnls_Ciliated)
+#proportion_goblet=as.numeric(samplesToUse$proportion_nnls_Goblet)
+#proportion_basal=as.numeric(samplesToUse$proportion_nnls_Basal)
 
 
 ###replace years.cessation NA with average value of corresponding group
@@ -368,7 +376,7 @@ datax <- cbind(data1, data2)
 
 rownames (annotation_col) <- colnames (datax)
 
-ph <- pheatmap(data,
+ph <- pheatmap(datax,
                scale="row",
                annotation_col = annotation_col,
                annotation_legend = T,
