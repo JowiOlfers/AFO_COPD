@@ -1,11 +1,7 @@
 library(tidyverse)
 library (dplyr)
-#if (!require("BiocManager", quietly = TRUE))
-#  install.packages("BiocManager")
-#BiocManager::install("limma")
 library(limma)
 library(edgeR)
-
 
 setwd("~/HVHL/Stages/Afstudeerstage_2022/CD")
 source(file.path("_helpers.r"), verbose=TRUE, chdir=TRUE)
@@ -75,7 +71,7 @@ masterTable <- readxl::read_xlsx(
 #cellulair-deconvolution
 #############################################################
 library(nlme)
-library(nnls)
+        library(nnls)
 library(pheatmap)
 library(ggplot2)
 library(ggpubr)
@@ -179,6 +175,15 @@ annotation_col <- masterTable %>%
     group=factor(group)) %>%
   tibble::column_to_rownames("SAMID")
 
+annotation_col_ciber_group <- annotation_col
+annotation_col_ciber_group$sample <- rownames(annotation_col_ciber_group)
+df.ciber_group <- merge.data.frame(df.ciber, annotation_col_ciber_group, by = "sample")
+
+df.ciber_group %>%
+  readr::write_csv(
+    file = file.path(out.dir, "ciber_results_group.csv")
+  )
+
 hm.ciber <- pheatmap(
   res.cibersort [,rownames(annotation_col)],
   main = "CIBERSORT",
@@ -238,6 +243,14 @@ df.nnls <- res.nnls %>%
     file = file.path(out.dir, "nnls_result.bronchial.csv")
   )
 
+annotation_col_nnls_group <- annotation_col
+annotation_col_nnls_group$sample <- rownames(annotation_col_nnls_group)
+df.nnls_group <- merge.data.frame(df.nnls, annotation_col_nnls_group, by = "sample")
+
+df.nnls_group %>%
+  readr::write_csv(
+    file = file.path(out.dir, "nnls_results_group.csv")
+  )
 
 hm.nnls <- pheatmap(
   res.nnls [,rownames(annotation_col)],
@@ -308,7 +321,7 @@ summry_table <- df.nnls %>%
 
 #summary table2 - no groups, 1 combined group
 summry_table2 <- df.nnls %>%
-  dplyr::add_row( # weg?
+  dplyr::add_row( # remove?
     df.ciber
   ) %>%
   dplyr::select(-sample) %>%
@@ -340,17 +353,33 @@ summry_table2 <- df.nnls %>%
 
 ##### COMPARING RESULTS ######
 
-##############################################
-# Boxplots of two methods per cell type                        
-##############################################
+########################################
+# Boxplot of two methods per cell type                        
+########################################
 df <- rbind(df.ciber, df.nnls)
 box.plt <- df %>%
+  dplyr::group_by(cell_type) %>%
+  dplyr::mutate(
+    grp_mean = mean(proportion)
+  ) %>%
+  dplyr::ungroup() %>%
+  dplyr::arrange(grp_mean) %>%
+  dplyr::mutate(
+    cell_type = factor(cell_type, ordered=T, levels = unique(cell_type))
+  ) %>%  
   ggplot2::ggplot(
     mapping = ggplot2::aes(
       x = cell_type,
       y = proportion,
       fill = method
     )
+  ) +
+  ggprism::scale_color_prism() +
+    ggplot2::scale_fill_manual(
+      values = c(
+        "CIBERSORT" = "orangered",
+        "NNLS" = "dodgerblue"
+      )
   ) +
   ggplot2::geom_boxplot(
     outlier.alpha = 0
@@ -365,6 +394,7 @@ box.plt <- df %>%
   ) +
   ggplot2::coord_flip() +
   ggplot2::xlab(label = "")
+
 
 df %>%
   readr::write_csv(
@@ -385,10 +415,123 @@ ggsave(
 )
 
 
+### Boxplot - NNLS - per cell type                        
+box.plt_nnls <- df.nnls %>%
+  dplyr::group_by(cell_type) %>%
+  dplyr::mutate(
+    grp_mean = mean(proportion)
+  ) %>%
+  dplyr::ungroup() %>%
+  dplyr::arrange(grp_mean) %>%
+  dplyr::mutate(
+    cell_type = factor(cell_type, ordered=T, levels = unique(cell_type))
+  ) %>%  
+  ggplot2::ggplot(
+    mapping = ggplot2::aes(
+      x = cell_type,
+      y = proportion,
+      fill = method
+    )
+  ) +
+  ggprism::scale_color_prism() +
+  ggplot2::scale_fill_manual(
+    values =c(
+      "NNLS" = "orangered"
+    )
+  ) + 
+  ggplot2::geom_boxplot(
+    outlier.alpha = 0
+  ) +
+  ggplot2::geom_jitter(
+    color = "black",
+    size = 0.4,
+    alpha = 0.35
+  ) +
+  ggplot2::theme(
+    legend.position = "bottom"
+  ) +
+  ggplot2::coord_flip() +
+  ggplot2::xlab(label = "")
 
-#############################################################
+df.nnls %>%
+  readr::write_csv(
+    file = file.path(out.bplot.img.dir, "boxplots.bronchial_nnls.csv")
+  )
+
+saveRDS(
+  box.plt_nnls,
+  file = file.path(out.bplot.img.dir, "boxplots.bronchial_nnls.rds")
+)
+
+ggsave(
+  filename = file.path(out.bplot.img.dir, "boxplots.bronchial_nnls.png"),
+  plot = box.plt_nnls,
+  width = 20,
+  height = 12.5,
+  units = "cm"
+)
+
+### Boxplot - CIBERSORT - per cell type                        
+box.plt_cib <- df.ciber %>%
+  dplyr::group_by(cell_type) %>%
+  dplyr::mutate(
+    grp_mean = mean(proportion)
+  ) %>%
+  dplyr::ungroup() %>%
+  dplyr::arrange(grp_mean) %>%
+  dplyr::mutate(
+    cell_type = factor(cell_type, ordered=T, levels = unique(cell_type))
+  ) %>%  
+  ggplot2::ggplot(
+    mapping = ggplot2::aes(
+      x = cell_type,
+      y = proportion,
+      fill = method
+    )
+  ) +
+  ggprism::scale_color_prism() +
+  ggplot2::scale_fill_manual(
+    values =c(
+      "CIBERSORT" = "orangered"
+    )
+  ) + 
+  ggplot2::geom_boxplot(
+    outlier.alpha = 0
+  ) +
+  ggplot2::geom_jitter(
+    color = "black",
+    size = 0.4,
+    alpha = 0.35
+  ) +
+  ggplot2::theme(
+    legend.position = "bottom"
+  ) +
+  ggplot2::coord_flip() +
+  ggplot2::xlab(label = "")
+
+df.ciber %>%
+  readr::write_csv(
+    file = file.path(out.bplot.img.dir, "boxplots.bronchial_CIBER.csv")
+  )
+
+saveRDS(
+  box.plt_cib,
+  file = file.path(out.bplot.img.dir, "boxplots.bronchial_CIBER.rds")
+)
+
+ggsave(
+  filename = file.path(out.bplot.img.dir, "boxplots.bronchial_CIBER.png"),
+  plot = box.plt_cib,
+  width = 20,
+  height = 12.5,
+  units = "cm"
+)
+
+
+
+##################################################
 # Correlation plots of two methods per cell types              
-#############################################################
+##################################################
 if (!identical(colnames(res.cibersort),colnames(res.nnls))) {
   stop("Not all cell types in both data frames.")
 }
@@ -495,6 +638,7 @@ big.df2 <- big.df %>%
   ) %>%
   dplyr::ungroup()
 
+###add Pie charts?
 
 kruskal.wallis.tests <- big.df2 %>%
   dplyr::nest_by(
@@ -539,7 +683,10 @@ big.figure.data <- big.df2 %>%
           group == "2" ~ "Severe COPD"
         )
       )
-    
+
+    if (nrow(big.figure.data) == 0) {
+        next
+    }
     
     big.figure <- big.figure.data %>%
       ggplot2::ggplot(
@@ -574,7 +721,7 @@ big.figure.data <- big.df2 %>%
         ),
         legend.position = "none"
       ) +
-      ggplot2::xlab("") +
+      ggplot2::xlab(c.method) +
       ggplot2::ylab("Proportion") +
       ggplot2::ggtitle(
         cell.type,
@@ -583,9 +730,9 @@ big.figure.data <- big.df2 %>%
       ggprism::scale_colour_prism() +
       ggplot2::scale_fill_manual(
         values = c(
-          "Healthy" = "#ff3333",
-          "Mild COPD" = "#33ff33",
-          "Severe COPD" = "#3333ff"
+          "Healthy" = "#FFFF00",
+          "Mild COPD" = "#FF4500",
+          "Severe COPD" = "#1E90FF"
         )
       )
     
@@ -607,8 +754,8 @@ big.figure.data <- big.df2 %>%
         file = file.path(out.bplot.img.dir, paste0("boxplots-cell-types-bronchial-",make.names(cell.type),"-",c.method,".csv"))
       )
     
-    celltype_bp[[make.names(cell.type)]] <- big.figure
-  }
+    celltype_bp[[make.names(paste0(cell.type, "_", c.method))]] <- big.figure
+ }
 }
 
 
@@ -686,6 +833,34 @@ t.test.res %>%
 big.df %>%
   readr::write_csv(file.path(out.dir, "cell-types-vs-disease-values.bronchial.csv"))
 
+
+### All boxplots in one figure ###
+allbox_nnls <- ggarrange(celltype_bp$Ciliated_NNLS, celltype_bp$Goblet_NNLS, celltype_bp$Basal_NNLS,
+          labels = c("A", "B", "C"),
+          ncol = 3, nrow = 1)
+ggsave(
+  filename = file.path(out.img.dir, "bronchial total boxplots_NNLS.png"),
+  plot = allbox_nnls,
+  width = 42,
+  height = 20,
+  units = "cm"
+)
+
+
+#CIBERSORT all boxplots
+allbox_cib <- ggarrange(celltype_bp$Ciliated_CIBERSORT, celltype_bp$Goblet_CIBERSORT,
+                         labels = c("A", "B"),
+                         ncol = 2, nrow = 1)
+ggsave(
+  filename = file.path(out.img.dir, "bronchial total boxplots_CIBER.png"),
+  plot = allbox_cib,
+  width = 25,
+  height = 15,
+  units = "cm"
+)
+
+
+###combined figure
 style <- ggplot2::theme(
     axis.text.x = ggplot2::element_text(size = 8),
     axis.text.y = ggplot2::element_text(size = 8),
@@ -695,13 +870,48 @@ style <- ggplot2::theme(
     plot.subtitle = ggplot2::element_text(size = 8)
   )
 
-figure_2_row_1 <- box.plt + ggtitle("Cellular deconvolution using NNLS (?)") + theme(legend.position = "none")
+#NNLS
+figure_1_row_1 <- box.plt_nnls + ggtitle("Cellular deconvolution using NNLS") + theme(legend.position = "none")
+figure_1_row_2 <- ggpubr::ggarrange(
+  celltype_bp[["Basal_NNLS"]] + style,
+  celltype_bp[["Ciliated_NNLS"]] + style,
+  celltype_bp[["Goblet_NNLS"]] + style,
+  labels = c("B", "C", "D"),
+  ncol = 3,
+  nrow = 1
+)
+
+figure_1 <- ggpubr::ggarrange(
+  figure_1_row_1,
+  figure_1_row_2,
+  labels = c("A", ""),
+  ncol = 1,
+  nrow = 2
+) %>%
+  ggpubr::annotate_figure(
+    top = text_grob(
+      "",
+      face = "bold",
+      size = 14
+    )
+  )
+
+ggsave(
+  filename = file.path(out.img.dir, "Combined.bronchial_NNLS.png"),
+  plot = figure_1,
+  width = 20,
+  height = 20,
+  units = "cm"
+)
+
+
+#CIBERSORT
+figure_2_row_1 <- box.plt_cib + ggtitle("Cellular deconvolution using CIBERSORT") + theme(legend.position = "none")
 figure_2_row_2 <- ggpubr::ggarrange(
-    celltype_bp[[1]] + style,
-    celltype_bp[[2]] + style,
-    celltype_bp[[3]] + style,
-    labels = c("B", "C", "D"),
-    ncol = 3,
+    celltype_bp[["Ciliated_CIBERSORT"]] + style,
+    celltype_bp[["Goblet_CIBERSORT"]] + style,
+    labels = c("B", "C"),
+    ncol = 2,
     nrow = 1
   )
 
@@ -721,9 +931,10 @@ figure_2 <- ggpubr::ggarrange(
   )
 
 ggsave(
-  filename = file.path(out.img.dir, "Figure_2.bronchial.png"),
+  filename = file.path(out.img.dir, "Combined.bronchial_CIBER.png"),
   plot = figure_2,
   width = 20,
   height = 20,
   units = "cm"
 )
+
