@@ -8,7 +8,7 @@ data.dir <- file.path(".", "results")
 results.dir <- file.path(".", "unique selection")
 results.dir.img <- file.path(results.dir, "img")
 
-### Mild COPD vs. controls 
+### Mild COPD vs. control
 #FDR 0.5
 x <-readr::read_csv(
   file.path(data.dir, "nasal-mildCOPD.vs.control_FDR0.5.txt"))
@@ -70,39 +70,37 @@ df3_list <- df3 [,-2:-3]
 
 
 
-
 ######################overlap and excluding
-#nothing with mild COPD since nothing significant 
+#nothing with mild COPD since nothing significant differential expressed
+
+##SEVERE COPD
+overlap <- merge (df2, df3, by= "hgnc_symbol")
 overlap_pos <-  merge (df2_pos, df3_pos, by= "hgnc_symbol")
 overlap_neg <-  merge (df2_neg, df3_neg, by= "hgnc_symbol")
-overlap <- rbind (overlap_pos, overlap_neg)
 
+unique_severe <- overlap
+dim (unique_severe)
+readr::write_csv(unique_severe, file = file.path (results.dir, "nasal_unique-DEGs_severeCOPD-FDR0.05FC2.csv"))
 
-uniqueGenes_pos <- df2_pos [ ! df2_pos$hgnc_symbol %in% overlap_pos$hgnc_symbol,]
-dim (uniqueGenes_pos)
-readr::write_csv(uniqueGenes_pos, file = file.path (results.dir, "nasal_UPunique-DEGs_severe.vs.controls-FDR0.05FC2.csv"))
+unique_severe_pos <- overlap_pos
+dim (unique_severe_pos)
+readr::write_csv(unique_severe_pos, file = file.path (results.dir, "nasal_unique-up-DEGs_severeCOPD-FDR0.05FC2.csv"))
 
-
-uniqueGenes_neg <- df2_neg [ ! df2_neg$hgnc_symbol %in% overlap_neg$hgnc_symbol,]
-dim (uniqueGenes_neg)
-readr::write_csv(uniqueGenes_neg, file = file.path (results.dir, "nasal_NEGunique-DEGs_severe.vs.controls-FDR0.05FC2.csv"))
-
-
-uniqueGenes <- df2 [ ! df2$hgnc_symbol %in% overlap$hgnc_symbol,]
-dim (uniqueGenes)
-readr::write_csv(uniqueGenes, file = file.path (results.dir, "nasal_allunique-DEGs_severe.vs.controls-FDR0.05FC2.csv"))
+unique_severe_neg <- overlap_neg
+dim (unique_severe_neg)
+readr::write_csv(unique_severe_neg, file = file.path (results.dir, "nasal_unique-down-DEGs_severeCOPD-FDR0.05FC2.csv"))
 
 
 
 #############venn diagrams
 library (VennDiagram)
 
-list_severe <- list (df2_list, df3_list)
-list_severe.up <- list (df2_pos_list, df3_pos_list)
-list_severe.down <- list (df2_neg_list, df3_neg_list)
+list <- list (df2_list, df3_list)
+list.up <- list (df2_pos_list, df3_pos_list)
+list.down <- list (df2_neg_list, df3_neg_list)
 
 venn.diagram(
-  x=list_severe, 
+  x=list, 
   category.names = c("Severe COPD vs. control", "Severe vs. mild COPD"),
   height = 600,
   width = 600,
@@ -113,7 +111,7 @@ venn.diagram(
   main.fontface = "bold",
   main.fontfamily = "sans", 
   main.cex = .4,
-  fill = c(alpha("#FFDF00",0.3), alpha('#3090C7',0.3)),
+  fill = c(alpha("#87CEEB",0.3), alpha('#FFFF66',0.3)),
   cex = .4,
   fontface = "bold", 
   fontfamily = "sans",
@@ -128,7 +126,7 @@ venn.diagram(
 
 
 venn.diagram(
-  x=list_severe.up, 
+  x=list.up, 
   category.names = c("Severe COPD vs. control", "Severe vs. mild COPD"),
   height = 600,
   width = 600,
@@ -139,7 +137,7 @@ venn.diagram(
   main.fontface = "bold",
   main.fontfamily = "sans", 
   main.cex = .4,
-  fill = c(alpha("#FFDF00",0.3), alpha('#3090C7',0.3)),
+  fill = c(alpha("#87CEEB",0.3), alpha('#FFFF66',0.3)),
   cex = .4,
   fontface = "bold", 
   fontfamily = "sans",
@@ -154,7 +152,7 @@ venn.diagram(
 
 
 venn.diagram(
-  x=list_severe.down, 
+  x=list.down, 
   category.names = c("Severe COPD vs. control", "Severe vs. mild COPD"),
   height = 600,
   width = 600,
@@ -165,7 +163,7 @@ venn.diagram(
   main.fontface = "bold",
   main.fontfamily = "sans", 
   main.cex = .4,
-  fill = c(alpha("#FFDF00",0.3), alpha('#3090C7',0.3)),
+  fill = c(alpha("#87CEEB",0.3), alpha('#FFFF66',0.3)),
   cex = .4,
   fontface = "bold", 
   fontfamily = "sans",
