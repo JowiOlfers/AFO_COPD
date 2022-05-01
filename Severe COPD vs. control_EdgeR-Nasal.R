@@ -251,45 +251,6 @@ ggsave (filename = file.path (results.dir.img, "gene_diff-severevscontrol-FDR0.0
 
 
 
-##### Pvalue selected genes - P<0.001
-#tT1$logPValue <- -log10(tT1$PValue)
-#tT1$GroupP <- "No diff"
-#tT1$GroupP [which((tT1$PValue < 0.001)&(tT1$logFC > 1))] = "Up"
-#tT1$GroupP [which((tT1$PValue < 0.001)&(tT1$logFC < -1))] = "Down"
-
-#amount of DEG with Pvalue < 0.001 and LogFC > 0 of < 0
-#table(tT1$Group)
-
-#tT1$labelP = ""
-#tT1 <- tT1[order(tT1$PValue),]
-
-#select that the top 10 DEG show names in the plot
-#up_geneP <- head(tT1$hgnc_symbol[which(tT1$GroupP == "Up")],10)
-#down_geneP <- head(tT1$hgnc_symbol[which(tT1$GroupP == "Down")],10)
-
-#present top 10 up and down regulated genes 
-#up_geneP
-#down_geneP
-
-#tT1_geneP <- c(as.character(up_geneP), as.character(down_geneP))
-#tT1$labelP[match(tT1_geneP, tT1$hgnc_symbol)] <- tT1_geneP
-
-#pp <- ggscatter(tT1, x = "logFC", y = "logPValue", 
-#                color = "GroupP", 
-#                palette = c("#2f5688","#BBBBBB","#CC0000"), 
-#                size = 1,
-#                label = tT1$labelP, 
-#                font.label = 8, 
-#                repel = T,
-#                xlab = "log2FoldChange", ylab = "-log10(PValue)") + theme_base() +
-#  geom_hline(yintercept = -log10(0.001),linetype="dashed")+
-#  geom_vline(xintercept = c(-1, 1),linetype="dashed")
-#pp
-#ggsave (filename = file.path (results.dir.img, "Volcano-severevscontrol-PValue.png"), width=30,height=25,units="cm",dpi=600 )
-#ggsave (filename = file.path (results.dir.img, "gene_diff-severevscontrol-PValue.pdf"), width=25,height=25,units="cm")
-
-
-
 #select up and down regulated genes with FDR < 0.05 and FC > 2 or < -2
 tT21=tT2[which(tT2$logFC >= 1),]
 dim (tT21)

@@ -61,15 +61,6 @@ gender=as.factor(samplesToUse$gender)
 packyears=as.numeric(samplesToUse$packyears)
 years.cessation=as.numeric(samplesToUse$years.of.cessation)
 
-#CD method: CIBERSORT
-#proportion_dendritic=as.numeric(samplesToUse$proportion_ciber_Dendritic)
-#proportion_goblet1N=as.numeric(samplesToUse$proportion_ciber_Goblet_1N)
-
-#CD method: NNLS
-#proportion_basal=as.numeric(samplesToUse$proportion_nnls_Basal)
-#proportion_fibro=as.numeric(samplesToUse$proportion_nnls_Fibroblasts)
-#proportion_goblet1N=as.numeric(samplesToUse$proportion_nnls_Goblet_1N)
-
 
 ###replace years.cessation NA with average value of corresponding group
 df = data.frame(years.cessation, group)
@@ -120,7 +111,6 @@ readr::write_csv(normalized_counts,
 
 ##############Differential expression analysis
 design <- model.matrix(~group + age + gender + packyears + years.of.cessation)
-#+ proportion_dendritic + proportion_goblet1N)
 nasaldata_DGEL <- estimateDisp(nasaldata_DGEL, design)
 #plotBCV(nasaldata_DGEL)
 
@@ -245,47 +235,8 @@ p <- ggscatter(tT1, x = "logFC", y = "logFDR",
   geom_hline(yintercept = -log10(0.05),linetype="dashed")+
   geom_vline(xintercept = c(-1, 1), linetype="dashed")
 p
-ggsave (filename = file.path (results.dir.img, "Volcano-severevsmild-FDR0.05.png"), width=25,height=25,units="cm",dpi=600 )
+ggsave (filename = file.path (results.dir.img, "Volcano-severevsmild-FDR0.05.png"), width=30,height=30,units="cm",dpi=600 )
 ggsave (filename = file.path (results.dir.img, "gene_diff-severevsmild-FDR0.05.pdf"), width=25,height=25,units="cm")
-
-
-
-##### Pvalue selected genes - P<0.001
-#tT1$logPValue <- -log10(tT1$PValue)
-#tT1$GroupP <- "No diff"
-#tT1$GroupP [which((tT1$PValue < 0.001)&(tT1$logFC > 1))] = "Up"
-#tT1$GroupP [which((tT1$PValue < 0.001)&(tT1$logFC < -1))] = "Down"
-
-#amount of DEG with Pvalue < 0.001 and LogFC > 0 of < 0
-#table(tT1$Group)
-
-#tT1$labelP = ""
-#tT1 <- tT1[order(tT1$PValue),]
-
-#select that the top 10 DEG show names in the plot
-#up_geneP <- head(tT1$hgnc_symbol[which(tT1$GroupP == "Up")],10)
-#down_geneP <- head(tT1$hgnc_symbol[which(tT1$GroupP == "Down")],10)
-
-#present top 10 up and down regulated genes 
-#up_geneP
-#down_geneP
-
-#tT1_geneP <- c(as.character(up_geneP), as.character(down_geneP))
-#tT1$labelP[match(tT1_geneP, tT1$hgnc_symbol)] <- tT1_geneP
-
-#pp <- ggscatter(tT1, x = "logFC", y = "logPValue", 
-#                color = "GroupP", 
-#                palette = c("#2f5688","#BBBBBB","#CC0000"), 
-#                size = 1,
-#                label = tT1$labelP, 
-#                font.label = 8, 
-#                repel = T,
-#                xlab = "log2FoldChange", ylab = "-log10(PValue)") + theme_base() +
-#  geom_hline(yintercept = -log10(0.001),linetype="dashed")+
-#  geom_vline(xintercept = c(-1, 1),linetype="dashed")
-#pp
-#ggsave (filename = file.path (results.dir.img, "Volcano-WC-severevsmild-PValue.png"), width=30,height=25,units="cm",dpi=600 )
-#ggsave (filename = file.path (results.dir.img, "gene_diff-severevsmild-PValue.pdf"), width=25,height=25,units="cm")
 
 
 
