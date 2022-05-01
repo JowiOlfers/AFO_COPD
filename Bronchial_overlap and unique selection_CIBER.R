@@ -12,7 +12,7 @@ results.dir.img <- file.path(results.dir, "img")
 ### Mild COPD vs. controls 
 #FDR 0.5
 x <-readr::read_csv(
-  file.path(data.dir , "bronchial-mildCOPD.vs.control_FDR0.05.txt"))
+  file.path(data.dir , "bronchial-mildCOPD.vs.control_CIBER_FDR0.05.txt"))
 df1 <- data.frame(x)
 
 tT1 <- select(df1, hgnc_symbol, logFC, FDR)
@@ -27,7 +27,7 @@ df1_list <- df1 [,-2:-3]
 
 ### Severe COPD vs. controls 
 x <-readr::read_csv(
-  file.path(data.dir, "bronchial-severeCOPD.vs.control_FDR0.05.txt"))
+  file.path(data.dir, "bronchial-severeCOPD.vs.control_CIBER_FDR0.05.txt"))
 table2 <- data.frame(x)
 
 tT2 <- select(table2, hgnc_symbol, logFC, FDR)
@@ -85,26 +85,26 @@ overlap_mc.sc <- merge (df1, df2, by = "hgnc_symbol" )
 df2.mc.rm <- df2 [ ! df2$hgnc_symbol %in% overlap_mc.sc$hgnc_symbol,]
 unique_severe <- merge (df2.mc.rm, df3, by = "hgnc_symbol" )
 dim (unique_severe)
-readr::write_csv(unique_severe, file = file.path (results.dir, "bronchial_unique-DEGs_severeCOPD-FDR0.05FC2.csv"))
+readr::write_csv(unique_severe, file = file.path (results.dir, "bronchial_unique-DEGs_severeCOPD-CIBER-FDR0.05FC2.csv"))
 
 unique_severe_pos <- unique_severe [which(unique_severe$logFC > 1), ]
-readr::write_csv(unique_severe_pos, file = file.path (results.dir, "bronchial_unique-UP-DEGs_severeCOPD-FDR0.05FC2.csv"))
+readr::write_csv(unique_severe_pos, file = file.path (results.dir, "bronchial_unique-UP-DEGs_severeCOPD-CIBER-FDR0.05FC2.csv"))
 
 unique_severe_neg <- unique_severe [which(unique_severe$logFC < -1), ]
-readr::write_csv(unique_severe_neg, file = file.path (results.dir, "bronchial_unique-NEG-DEGs_severeCOPD-FDR0.05FC2.csv"))
+readr::write_csv(unique_severe_neg, file = file.path (results.dir, "bronchial_unique-NEG-DEGs_severeCOPD-CIBER-FDR0.05FC2.csv"))
 
 
 ####### UNIQUE GENES FOR MILD COPD ##########
 df1.mc.rm <- df1 [ ! df1$hgnc_symbol %in% overlap_mc.sc$hgnc_symbol,]
 unique_mild <- merge (df1.mc.rm, df4, by = "hgnc_symbol" )
 dim (unique_mild)
-readr::write_csv(unique_mild, file = file.path (results.dir, "mild_unique-DEGs_severeCOPD-FDR0.05FC2.csv"))
+readr::write_csv(unique_mild, file = file.path (results.dir, "mild_unique-DEGs_severeCOPD-CIBER-FDR0.05FC2.csv"))
 
 unique_mild_pos <- unique_mild [which(unique_mild$logFC > 1), ]
-readr::write_csv(unique_mild_pos, file = file.path (results.dir, "mild_unique-UP-DEGs_severeCOPD-FDR0.05FC2.csv"))
+readr::write_csv(unique_mild_pos, file = file.path (results.dir, "mild_unique-UP-DEGs_severeCOPD-CIBER-FDR0.05FC2.csv"))
 
 unique_mild_neg <- unique_mild [which(unique_mild$logFC < -1), ]
-readr::write_csv(unique_mild_neg, file = file.path (results.dir, "mild_unique-NEG-DEGs_severeCOPD-FDR0.05FC2.csv"))
+readr::write_csv(unique_mild_neg, file = file.path (results.dir, "mild_unique-NEG-DEGs_severeCOPD-CIBER-FDR0.05FC2.csv"))
 
 
 
@@ -138,7 +138,7 @@ venn.diagram(
   cat.pos = c(195, -205, 100),
   cat.dist = c(0.030, 0.040, 0.040),
   cat.fontfamily = "sans",
-  filename =  file.path (results.dir.img, "severeCOPD_venndiagram.png")
+  filename =  file.path (results.dir.img, "severeCOPD_CIBER_venndiagram.png")
 )
 
 
@@ -164,7 +164,7 @@ venn.diagram(
   cat.pos = c(195, -205, 100),
   cat.dist = c(0.030, 0.040, 0.040),
   cat.fontfamily = "sans",
-  filename =  file.path (results.dir.img, "Up-regulated_severeCOPD_venndiagram.png")
+  filename =  file.path (results.dir.img, "Up-regulated_severeCOPD_CIBER_venndiagram.png")
 )
 
 
@@ -190,7 +190,7 @@ venn.diagram(
   cat.pos = c(195, -205, 100),
   cat.dist = c(0.030, 0.040, 0.040),
   cat.fontfamily = "sans",
-  filename =  file.path (results.dir.img, "Down-regulated_severeCOPD_venndiagram.png")
+  filename =  file.path (results.dir.img, "Down-regulated_severeCOPD_CIBER_venndiagram.png")
 )
 
 #######MILD COPD
@@ -220,7 +220,7 @@ venn.diagram(
   cat.pos = c(195, -205, 100),
   cat.dist = c(0.030, 0.040, 0.040),
   cat.fontfamily = "sans",
-  filename =  file.path (results.dir.img, "MildCOPD_venndiagram.png")
+  filename =  file.path (results.dir.img, "MildCOPD_CIBER_venndiagram.png")
 )
 
 
@@ -246,7 +246,7 @@ venn.diagram(
   cat.pos = c(195, -205, 100),
   cat.dist = c(0.030, 0.040, 0.040),
   cat.fontfamily = "sans",
-  filename =  file.path (results.dir.img, "Up-regulated_mildCOPD_venndiagram.png")
+  filename =  file.path (results.dir.img, "Up-regulated_mildCOPD_CIBER_venndiagram.png")
 )
 
 
@@ -272,7 +272,7 @@ venn.diagram(
   cat.pos = c(195, -205, 100),
   cat.dist = c(0.030, 0.040, 0.040),
   cat.fontfamily = "sans",
-  filename =  file.path (results.dir.img, "Down-regulated_mildCOPD_venndiagram.png")
+  filename =  file.path (results.dir.img, "Down-regulated_mildCOPD_CIBER_venndiagram.png")
 )
 
 
