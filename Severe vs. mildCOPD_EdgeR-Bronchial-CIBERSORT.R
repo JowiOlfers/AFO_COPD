@@ -19,7 +19,6 @@ results.dir <- file.path(here::here(), "results")
 dir.create(results.dir, recursive=TRUE)
 results.dir.img <- file.path(results.dir, "img")
 
-
 x <- readr::read_csv(
   file.path(data.dir, "bronchial rawcounts.csv"))
 array <- data.frame (x)
@@ -28,10 +27,10 @@ y <- readr::read_csv(
   file.path(data.dir, "bronchial clinical data.csv"))
 s <- data.frame (y)
 
+
 row.names(array)=array[,1]
 array=array[,-1]
 array=array[,s$SAMID]
-
 
 array1=array[,which(s$mild.vs.control==1)]
 s1=s[which(s$mild.vs.control==1),]
@@ -50,9 +49,9 @@ s3=s[which(s$severe.vs.mild==1),]
 
 # EdgeR: disease
 
-############################### array1 - Mild vs. controls
-expressionDataToUse= array1
-samplesToUse=s1
+###########################array3 - Severe vs. mild COPD
+expressionDataToUse= array3
+samplesToUse=s3
 
 #create factors
 group=as.factor(samplesToUse$group)
@@ -62,25 +61,32 @@ gender=as.factor(samplesToUse$gender)
 packyears=as.numeric(samplesToUse$packyears)
 years.cessation=as.numeric(samplesToUse$years.of.cessation)
 
-#CD method: NNLS
-proportion_ciliated=as.numeric(samplesToUse$proportion_nnls_Ciliated)
-proportion_goblet=as.numeric(samplesToUse$proportion_nnls_Goblet)
-proportion_basal=as.numeric(samplesToUse$proportion_nnls_Basal)
+#CD method: CIBERSORT
+proportion_ciliated=as.numeric(samplesToUse$proportion_ciber_Ciliated)
+proportion_goblet=as.numeric(samplesToUse$proportion_ciber_Goblet)
 
 
 ###replace years.cessation NA with average value of corresponding group
 df = data.frame(years.cessation, group)
+df1 <- subset(df, group == "1")
+df2 <- subset(df, group == "2")
 
-#calculate average of group 0
+#calculate average of group 1 and 2
 dfx <- df[!(is.na(df$years.cessation)), ]
-dfx0 <- subset(dfx, group == "0")
-mean.cessation_0 <- mean(dfx0$years.cessation)
-print (mean.cessation_0)
+
+dfx1 <- subset(dfx, group == "1")
+mean.cessation_1 <- mean(dfx1$years.cessation)
+print (mean.cessation_1)
+
+dfx2 <- subset(dfx, group == "2")
+mean.cessation_2 <- mean(dfx2$years.cessation)
+print (mean.cessation_2)
 
 #replace NA with average cessation of group
-df[is.na(df)]<- mean.cessation_0
-years.of.cessation <- as.numeric(df$years.cessation)
-print(years.of.cessation)
+df1[is.na(df1)]<- mean.cessation_1
+df2[is.na(df2)]<- mean.cessation_2
+df_na.rm <- rbind(df1,df2)
+years.of.cessation <- as.numeric(df_na.rm$years.cessation)
 
 
 
@@ -96,27 +102,27 @@ bronchialdata_DGEL <- calcNormFactors(bronchialdata_DGEL, method="TMM")
 bronchialdata_DGEL$samples
 #plotMDS(bronchialdata_DGEL)
 
-
-#count per million (cpm) read, also called normalized count
+#count per million (cpm) read
 normalized_counts <- cpm(bronchialdata_DGEL, log = TRUE)
 normalized_counts <- as.data.frame (normalized_counts)
-write.csv(normalized_counts, 
-                 file = file.path (results.dir, "bronchial-log2CPM.mildvscontrol.csv"))
-write.csv(normalized_counts, 
-                 file = file.path (results.dir, "bronchial-log2CPM.mildvscontrol.txt"))
+#write.csv(normalized_counts, 
+#                 file = file.path (results.dir, "bronchial-log2CPM.severevsmild.csv"))
+#write.csv(normalized_counts, 
+#                 file = file.path (results.dir, "bronchial-log2CPM.severevsmild.txt"))
 
 
 
 ##############Differential expression analysis
 design <- model.matrix(~group + age + gender + packyears + years.of.cessation +
-                         proportion_ciliated + proportion_goblet + proportion_basal)
+                         proportion_ciliated + proportion_goblet)
 bronchialdata_DGEL <- estimateDisp(bronchialdata_DGEL, design)
 #plotBCV(bronchialdata_DGEL)
 
 fit <- glmFit(bronchialdata_DGEL, design)
 lrt <- glmLRT(fit, coef = 2)
 results <- topTags(lrt,n=nrow(bronchialdata_DGEL))
-#plotMeanVar(nasaldata_DGEL, show.raw=TRUE, show.tagwise=TRUE, show.binned=TRUE)
+#plotMeanVar(bronchialdata_DGEL, show.raw=TRUE, show.tagwise=TRUE, show.binned=TRUE)
+
 
 #Ensembl - hgnc_symbols
 ensembl.dir <- file.path("C:/Users/Jowi/Documents/HVHL/Stages/Afstudeerstage_2022/CD")
@@ -155,6 +161,7 @@ geneData <- getGenedataByEnsemblId(
 #)
 #G_list=as.matrix(G_list)
 
+
 tT1=merge(
   x = tT1,
   y = geneData,
@@ -166,27 +173,25 @@ tT1=merge(
 
 names(tT1)[1] <- "ENSGid"
 tT1 <- tT1 [!(is.na(tT1$hgnc_symbol) | tT1$hgnc_symbol == ""), ]
-readr::write_csv(tT1, file = file.path (results.dir, "bronchial-mildCOPD.vs.control_NNLS.txt"))
+#tT1 <- tT1 [!(tT1$hgnc_symbol == "CCL3L3"), ]
+readr::write_csv(tT1, file = file.path (results.dir, "bronchial-severeCOPD.vs.mild_ciber.txt"))
 
 tT2=tT1[which(tT1$FDR<0.05),]
 names(tT2)[1] <- "ENSGid"
-readr::write_csv(tT2, file = file.path (results.dir, "bronchial-mildCOPD.vs.control_NNLS_FDR0.05.txt"))
+readr::write_csv(tT2, file = file.path (results.dir, "bronchial-severeCOPD.vs.mild_FDR0.05_ciber.txt"))
 
 #tT3=tT1[which(tT1$FDR<0.01),]
 #names(tT3)[1] <- "ENSGid"
-#readr::write_csv(tT3, file = file.path (results.dir, "bronchial-mildCOPD.vs.control_NNLS_FDR0.01.txt"))
+#readr::write_csv(tT3, file = file.path (results.dir, "bronchial-severeCOPD.vs.mild_FDR0.01_ciber.txt"))
 
 #tT4=tT1[which(tT1$PValue<0.01),]
 #names(tT4)[1] <- "ENSGid"
-#readr::write_csv(tT4, file = file.path (results.dir, "bronchial-mildCOPD.vs.control_NNLS_P0.01.txt"))
-
-#tT5=tT1[which(tT1$PValue<0.001),]
-#names(tT5)[1] <- "ENSGid"
-#readr::write_csv(tT5, file = file.path (results.dir, "bronchial-mildCOPD.vs.control_NNLS_P0.001.txt"))
+#readr::write_csv(tT4, file = file.path (results.dir, "bronchial-severeCOPD.vs.mild_P0.01_ciber.txt"))
 
 
 
-#Selection and presentation significant up and down regulated genes
+
+########## Selection and presentation significant up and down regulated genes
 #volcano plot
 library(ggpubr)
 library(ggthemes)
@@ -214,49 +219,49 @@ tT1_gene <- c(as.character(up_gene), as.character(down_gene))
 tT1$label[match(tT1_gene, tT1$hgnc_symbol)] <- tT1_gene
 
 p <- ggscatter(tT1, x = "logFC", y = "logFDR", 
-          color = "Group", 
-          palette = c("#013E80","#BBBBBB","#CC4D00"),
-          size = 1,
-          label = tT1$label, 
-          font.label = 8, 
-          repel = T,
-          xlab = "log2FoldChange", ylab = "-log10(FDR)") + theme_base() +
+               color = "Group", 
+               palette = c("#013E80","#BBBBBB","#CC4D00"),
+               size = 1,
+               label = tT1$label, 
+               font.label = 8, 
+               repel = T,
+               xlab = "log2FoldChange", ylab = "-log10(FDR)") + theme_base() +
   geom_hline(yintercept = -log10(0.05),linetype="dashed")+
   geom_vline(xintercept = c(-1,1),linetype="dashed")
 p
-ggsave (filename = file.path (results.dir.img, "Volcano-bronchial-mildvscontrol-NNLS-FDR0.05.png"), width=25,height=25,units="cm",dpi=600 )
-ggsave (filename = file.path (results.dir.img, "gene_diff-bronchial-mildvscontrol-NNLS-FDR0.05.pdf"), width=25,height=25,units="cm")
+ggsave (filename = file.path (results.dir.img, "Volcano-bronchial-severevsmild-ciber-FDR0.05.png"), width=25,height=25,units="cm",dpi=600 )
+ggsave (filename = file.path (results.dir.img, "gene_diff-bronchial-severevsmild-ciber-FDR0.05.pdf"), width=25,height=25,units="cm")
 
 
 
-###select up and down regulated genes with FDR < 0.05 and FC > 2 or < -2
-tT21=tT2[which(tT2$logFC >= 1),] 
+#select up and down regulated genes with FDR < 0.05 and FC > 2 or < -2
+tT21=tT2[which(tT2$logFC >= 1),]
 dim (tT21)
-readr::write_csv(tT21, file = file.path (results.dir, "bronchial_up-DEGs_mild.vs.controls-NNLS-FDR0.05FC2.csv"))
+readr::write_csv(tT21, file = file.path (results.dir, "bronchial_up-DEGs_severevsmild-FDR0.05FC2_ciber.csv"))
 
 tT22=tT2[which(tT2$logFC <= -1), ]
 dim (tT22)
-readr::write_csv(tT22, file = file.path (results.dir, "bronchial_down-DEGs_mild.vs.controls-NNLS-FDR0.05FC2.csv"))
+readr::write_csv(tT22, file = file.path (results.dir, "bronchial_down-DEGs_severevsmild-FDR0.05FC2_ciber.csv"))
 
 tT23 <- rbind (tT21, tT22)
 dim (tT23)
-readr::write_csv(tT23, file = file.path (results.dir, "bronchial_all-DEGs_mild.vs.controls-NNLS-FDR0.05FC2.csv"))
+readr::write_csv(tT23, file = file.path (results.dir, "bronchial_all-DEGs_severevsmild-FDR0.05FC2_ciber.csv"))
 
-
-#select top 20 - top 10 up and top 10 down regulated genes
+#select top 20 - FDR < 0.05
 tT21 = arrange (tT21, desc(logFC))
 tT21a = head(tT21[,1:7], 10)
 tT22 = arrange (tT22, desc(-logFC))
 tT22a = head(tT22[,1:7], 10)
 tT23a <- rbind (tT21a, tT22a)
-readr::write_csv(tT23a, file = file.path (results.dir, "bronchial_top20.DEGs_mild.vs.controls-NNLS-FDR0.05FC2.csv"))
+readr::write_csv(tT23a, file = file.path (results.dir, "bronchial_top20.DEGs_severevsmild-FDR0.05FC2_ciber.csv"))
 
-#select top 10 - top 5 up and top 5 down regulated genes 
+#select top 10 - FDR < 0.05
+tT21 = arrange (tT21, desc(logFC))
 tT221a = head(tT21[,1:7], 5)
+tT22 = arrange (tT22, desc(-logFC))
 tT222a = head(tT22[,1:7], 5)
 tT223a <- rbind (tT221a, tT222a)
-readr::write_csv(tT223a, file = file.path (results.dir, "bronchial_top10.DEGs_mild.vs.controls-NNLS-FDR0.05FC2.csv"))
-
+readr::write_csv(tT223a, file = file.path (results.dir, "bronchial_top10.DEGs_severevsmild-FDR0.05FC2_ciber.csv"))
 
 
 ########Create data.frame with normalized expression for genes with significant FC
@@ -270,12 +275,11 @@ normalized_counts.FDRa <- merge(tT23a, normalized_counts2, by="ENSGid" )
 
 row.names(normalized_counts.FDR) <- normalized_counts.FDR$hgnc_symbol
 normalized_counts.FDR$LR <- normalized_counts.FDR$ENSGid <- normalized_counts.FDR$logFC <- normalized_counts.FDR$logCPM <- normalized_counts.FDR$FDR <- normalized_counts.FDR$PValue <- normalized_counts.FDR$hgnc_symbol <- NULL
-write.csv(normalized_counts.FDR, file = file.path (results.dir, "bronchial-normalized_counts-NNLS-FDR0.05.mildvscontrol.csv"))
+write.csv(normalized_counts.FDR, file = file.path (results.dir, "bronchial-normalized_counts-ciber-FDR0.05.severevsmild.csv"))
 
 row.names(normalized_counts.FDRa) <- normalized_counts.FDRa$hgnc_symbol
 normalized_counts.FDRa$LR <- normalized_counts.FDRa$ENSGid <- normalized_counts.FDRa$logFC <- normalized_counts.FDRa$logCPM <- normalized_counts.FDRa$FDR <- normalized_counts.FDRa$PValue <- normalized_counts.FDRa$hgnc_symbol <- NULL
-write.csv(normalized_counts.FDRa, file = file.path (results.dir, "bronchial-normalized_counts.top20-NNLS-FDR0.05.mildvscontrol.csv"))
-
+write.csv(normalized_counts.FDRa, file = file.path (results.dir, "bronchial-normalized_counts.top20-ciber-FDR0.05.severevsmild.csv"))
 
 
 #####################heatmap
@@ -283,8 +287,8 @@ library(pheatmap)
 library(RColorBrewer)
 library(ggplot2)
 
-table (s1$group)
-annotation_col = data.frame(Group = factor(c(rep("Non-COPD", 23), rep("Mild COPD", 23))))
+table (s3$group)
+annotation_col = data.frame(Group = factor(c(rep("Mild COPD", 23),rep("Severe COPD", 122))))
 rownames(annotation_col)
 
 data <- normalized_counts.FDRa
@@ -292,8 +296,8 @@ colnames(data)
 rownames(annotation_col) <- colnames(data)
 head(annotation_col)
 
-data1 <- data [,annotation_col$Group == "Non-COPD"]
-data2 <- data [,annotation_col$Group == "Mild COPD"]
+data1 <- data [,annotation_col$Group == "Mild COPD"]
+data2 <- data [,annotation_col$Group == "Severe COPD"]
 
 HC1 <- hclust (dist(t(data1), method = "manhattan"), method = "complete", members = NULL)
 HC2 <- hclust (dist(t(data2), method = "manhattan"), method = "complete", members = NULL)
@@ -305,22 +309,23 @@ datax <- cbind(data1, data2)
 rownames (annotation_col) <- colnames (datax)
 
 ph <- pheatmap(datax,
-              scale="row",
-              annotation_col = annotation_col,
-              annotation_legend = T,
-              annotation_names_col = F,
-              number_format="%.2e",
-              border="white",  
-              color=colorRampPalette(c("#013E80", "white", "orangered"))(100),
-              border_color=NA, 
-              cellwidth = 18,cellheight = 11, 
-              cluster_cols = F, 
-              cluster_rows = T,
-              show_rownames = T, 
-              show_colnames = F,
-              legend = T,   
-              legend_breaks = -4:4, 
-              fontsize = 10,
-              fontsize_row = 10, 
-              fontsize_col = 10,
-              filename = file.path (results.dir.img, "Heatmap_bronchial_mild.vs.control_NNLS_FDR0.05.png") ,dpi=600)
+               scale="row",
+               annotation_col = annotation_col,
+               annotation_legend = T,
+               annotation_names_col = F,
+               number_format="%.2e",
+               border="white",  
+               color=colorRampPalette(c("#013E80", "white", "orangered"))(100),
+               border_color=NA, 
+               cellwidth =10,cellheight = 22, 
+               cluster_cols = F, 
+               cluster_rows = T,
+               show_rownames = T, 
+               show_colnames = F,
+               legend = T,   
+               legend_breaks = -4:4, 
+               fontsize = 10,
+               fontsize_row = 12, 
+               fontsize_col = 10,
+               filename = file.path (results.dir.img, "Heatmap_bronchial_severe.vs.mild_FDR0.05_ciber.png") ,dpi=600)
+

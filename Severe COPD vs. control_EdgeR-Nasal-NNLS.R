@@ -25,7 +25,7 @@ x <- readr::read_csv(
 array <- data.frame (x)
 
 y <- readr::read_csv(
-  file.path(data.dir, "nasal clinical data_CD.csv"))
+  file.path(data.dir, "nasal clinical data.csv"))
 s <- data.frame (y)
 
 row.names(array)=array[,1]
@@ -108,9 +108,9 @@ nasaldata_DGEL$samples
 #count per million (cpm) read
 normalized_counts <- cpm(nasaldata_DGEL, log = TRUE)
 normalized_counts <- as.data.frame (normalized_counts)
-readr::write_csv(normalized_counts, 
+write.csv(normalized_counts, 
                  file = file.path (results.dir, "nasal-log2CPM.severevscontrol.csv"))
-readr::write_csv(normalized_counts, 
+write.csv(normalized_counts, 
                  file = file.path (results.dir, "nasal-log2CPM.severevscontrol.txt"))
 
 
@@ -176,31 +176,67 @@ tT1=merge(
   by.y ="ensembl_gene_id")
 
 
-rownames(tT1)=tT1[,1]
-#standard an error due to DUPLICATES:'ENSG00000187510', 'ENSG00000276085'  and 'ENSG00000255374'
 names(tT1)[1] <- "ENSGid"
 tT1 <- tT1 [!(is.na(tT1$hgnc_symbol) | tT1$hgnc_symbol == ""), ]
 readr::write_csv(tT1, file = file.path (results.dir, "nasal-severeCOPD.vs.control_NNLS.txt"))
 
 tT2=tT1[which(tT1$FDR<0.05), ]
 names(tT2)[1] <- "ENSGid"
-readr::write_csv(tT2, file = file.path (results.dir, "nasal-severeCOPD.vs.control_NNLS_FDR0.05.txt"))
+readr::write_csv(tT2, file = file.path (results.dir, "nasal-severeCOPD.vs.control_FDR0.05_NNLS.txt"))
 
-tT3=tT1[which(tT1$FDR<0.01), ]
-names(tT3)[1] <- "ENSGid"
-readr::write_csv(tT3, file = file.path (results.dir, "nasal-severeCOPD.vs.control_NNLS_FDR0.01.txt"))
+#tT3=tT1[which(tT1$FDR<0.01), ]
+#names(tT3)[1] <- "ENSGid"
+#readr::write_csv(tT3, file = file.path (results.dir, "nasal-severeCOPD.vs.control_FDR0.01_NNLS.txt"))
 
 #tT4=tT1[which(tT1$PValue<0.05),]
 #names(tT4)[1] <- "ENSGid"
-#readr::write_csv(tT4, file = file.path (results.dir, "nasal-severeCOPD.vs.control_NNLS_P0.05.txt"))
+#readr::write_csv(tT4, file = file.path (results.dir, "nasal-severeCOPD.vs.control_P0.05_NNLS.txt"))
 
 #tT5=tT1[which(tT1$PValue<0.01),]
 #names(tT5)[1] <- "ENSGid"
-#readr::write_csv(tT5, file = file.path (results.dir, "nasal-severeCOPD.vs.control_NNLS_P0.01.txt"))
+#readr::write_csv(tT5, file = file.path (results.dir, "nasal-severeCOPD.vs.control_P0.01_NNLS.txt"))
 
-#tT6=tT1[which(tT1$PValue<0.001),]
-#names(tT6)[1] <- "ENSGid"
-#readr::write_csv(tT6, file = file.path (results.dir, "nasal-severeCOPD.vs.control_NNLS_P0.001.txt"))
+
+
+#select up and down regulated genes with FDR < 0.05 and FC > 2 or < -2
+tT21=tT2[which(tT2$logFC >= 1),]
+dim (tT21)
+readr::write_csv(tT21, file = file.path (results.dir, "nasal_up-DEGs_severe.vs.controls-NNLS-FDR0.05FC2.csv"))
+
+tT22=tT2[which(tT2$logFC <= -1), ]
+dim (tT22)
+readr::write_csv(tT22, file = file.path (results.dir, "nasal_down-DEGs_severe.vs.controls-NNLS-FDR0.05FC2.csv"))
+
+tT23 <- rbind (tT21, tT22)
+dim (tT23)
+readr::write_csv(tT23, file = file.path (results.dir, "nasal_all-DEGs_severe.vs.controls-NNLS-FDR0.05FC2.csv"))
+
+#select top 20 - FDR < 0.05
+tT21 = arrange (tT21, desc(logFC))
+tT21a = head(tT21[,1:7], 10)
+tT22 = arrange (tT22, desc(-logFC))
+tT22a = head(tT22[,1:7], 10)
+tT23a <- rbind (tT21a, tT22a)
+readr::write_csv(tT23a, file = file.path (results.dir, "nasal_top20.DEGs_severe.vs.controls-NNLS-FDR0.05FC2.csv"))
+
+#select top 10 - FDR < 0.05
+tT21 = arrange (tT21, desc(logFC))
+tT221a = head(tT21[,1:7], 5)
+tT22 = arrange (tT22, desc(-logFC))
+tT222a = head(tT22[,1:7], 5)
+tT223a <- rbind (tT221a, tT222a)
+readr::write_csv(tT223a, file = file.path (results.dir, "nasal_top10.DEGs_severe.vs.controls-NNLS-FDR0.05FC2.csv"))
+
+
+#select up and down regulated genes with FDR < 0.01 and FC > 2 or < -2
+#tT31=tT3[which(tT3$logFC >= 1),] 
+#readr::write_csv(tT31, file = file.path (results.dir, "nasal_up-DEGs_severe.vs.controls-FDR0.01FC2.csv"))
+
+#tT32=tT3[which(tT3$logFC <= -1), ]
+#readr::write_csv(tT31, file = file.path (results.dir, "nasal_down-DEGs_severe.vs.controls-FDR0.01FC2.csv"))
+
+#tT33 <- rbind (tT31, tT32)
+#write.table(tT33, "nasal_allDEGs_severe.vs.controls-FDR0.01FC2.csv")
 
 
 
@@ -233,7 +269,7 @@ tT1$label[match(tT1_gene, tT1$hgnc_symbol)] <- tT1_gene
 
 p <- ggscatter(tT1, x = "logFC", y = "logFDR", 
                color = "Group", 
-               palette = c("#2f5688","#BBBBBB","#CC0000"), 
+               palette = c("#013E80","#BBBBBB","#CC4D00"), 
                size = 1,
                label = tT1$label, 
                font.label = 8, 
@@ -244,47 +280,6 @@ p <- ggscatter(tT1, x = "logFC", y = "logFDR",
 p
 ggsave (filename = file.path (results.dir.img, "Volcano-nasal-severevscontrol-NNLS-FDR0.05.png"), width=30,height=30,units="cm",dpi=600 )
 ggsave (filename = file.path (results.dir.img, "gene_diff-severevscontrol-NNLS-FDR0.05.pdf"), width=25,height=25,units="cm")
-
-
-#select up and down regulated genes with FDR < 0.05 and FC > 2 or < -2
-tT21=tT2[which(tT2$logFC >= 1),]
-dim (tT21)
-readr::write_csv(tT21, file = file.path (results.dir, "nasal_up-DEGs_severe.vs.controls-NNLS-FDR0.05FC2.csv"))
-
-tT22=tT2[which(tT2$logFC <= -1), ]
-dim (tT22)
-readr::write_csv(tT22, file = file.path (results.dir, "nasal_down-DEGs_severe.vs.controls-NNLS-FDR0.05FC2.csv"))
-
-tT23 <- rbind (tT21, tT22)
-dim (tT23)
-readr::write_csv(tT23, file = file.path (results.dir, "nasal_allDEGs_severe.vs.controls-NNLS-FDR0.05FC2.csv"))
-
-#select top 20 - FDR < 0.05
-tT21 = arrange (tT21, desc(logFC))
-tT21a = head(tT21[,1:7], 10)
-tT22 = arrange (tT22, desc(-logFC))
-tT22a = head(tT22[,1:7], 10)
-tT23a <- rbind (tT21a, tT22a)
-readr::write_csv(tT23a, file = file.path (results.dir, "nasal_top20.DEGs_severe.vs.controls-NNLS-FDR0.05FC2.csv"))
-
-#select top 10 - FDR < 0.05
-tT21 = arrange (tT21, desc(logFC))
-tT221a = head(tT21[,1:7], 5)
-tT22 = arrange (tT22, desc(-logFC))
-tT222a = head(tT22[,1:7], 5)
-tT223a <- rbind (tT221a, tT222a)
-readr::write_csv(tT223a, file = file.path (results.dir, "nasal_top10.DEGs_severe.vs.controls-NNLS-FDR0.05FC2.csv"))
-
-
-#select up and down regulated genes with FDR < 0.01 and FC > 2 or < -2
-#tT31=tT3[which(tT3$logFC >= 1),] 
-#readr::write_csv(tT31, file = file.path (results.dir, "nasal_up-DEGs_severe.vs.controls-FDR0.01FC2.csv"))
-
-#tT32=tT3[which(tT3$logFC <= -1), ]
-#readr::write_csv(tT31, file = file.path (results.dir, "nasal_down-DEGs_severe.vs.controls-FDR0.01FC2.csv"))
-
-#tT33 <- rbind (tT31, tT32)
-#write.table(tT33, "nasal_allDEGs_severe.vs.controls-FDR0.01FC2.csv")
 
 
 
@@ -307,7 +302,7 @@ normalized_counts.FDRa <- merge(tT23a, normalized_counts2, by="ENSGid" )
 
 row.names(normalized_counts.FDR) <- normalized_counts.FDR$hgnc_symbol
 normalized_counts.FDR$LR <- normalized_counts.FDR$ENSGid <- normalized_counts.FDR$logFC <- normalized_counts.FDR$logCPM <- normalized_counts.FDR$FDR <- normalized_counts.FDR$PValue <- normalized_counts.FDR$hgnc_symbol <- NULL
-readr::write_csv(normalized_counts.FDR, file = file.path (results.dir, "nasal-normalized_counts-NNLS-FDR0.05.severevscontrol.csv"))
+write.csv(normalized_counts.FDR, file = file.path (results.dir, "nasal-normalized_counts-NNLS-FDR0.05.severevscontrol.csv"))
 
 ####normalized_counts.FDRa - tT23a
 ##error: row.names duplicate 'POLR2J4'and. 'TBCE'.
@@ -319,7 +314,7 @@ readr::write_csv(normalized_counts.FDR, file = file.path (results.dir, "nasal-no
 
 row.names(normalized_counts.FDRa) <- normalized_counts.FDRa$hgnc_symbol
 normalized_counts.FDRa$LR <- normalized_counts.FDRa$ENSGid <- normalized_counts.FDRa$logFC <- normalized_counts.FDRa$logCPM <- normalized_counts.FDRa$FDR <- normalized_counts.FDRa$PValue <- normalized_counts.FDRa$hgnc_symbol <- NULL
-readr::write_csv(normalized_counts.FDRa, file = file.path (results.dir, "nasal-normalized_counts.top20-NNLS-FDR0.05.severevscontrol.csv"))
+write.csv(normalized_counts.FDRa, file = file.path (results.dir, "nasal-normalized_counts.top20-NNLS-FDR0.05.severevscontrol.csv"))
 
 
 
@@ -349,6 +344,7 @@ datax <- cbind(data1, data2)
 
 rownames (annotation_col) <- colnames (datax)
 
+
 ph <- pheatmap(datax,
               scale="row",
               annotation_col = annotation_col,
@@ -356,7 +352,7 @@ ph <- pheatmap(datax,
               annotation_names_col = F,
               number_format="%.2e",
               border="white",  
-              color=colorRampPalette(c("navy", "white", "red"))(100),
+              color=colorRampPalette(c("#013E80", "white", "orangered"))(100),
               border_color=NA, 
               cellwidth = 9,cellheight = 20, 
               cluster_cols = F, 
@@ -368,4 +364,4 @@ ph <- pheatmap(datax,
               fontsize = 12,
               fontsize_row = 12, 
               fontsize_col = 10,
-              filename = file.path (results.dir.img, "Heatmap_nasal_severe.vs.control_NNLS_FDR0.05.png") ,dpi=600)
+              filename = file.path (results.dir.img, "Heatmap_nasal_severe.vs.control_FDR0.05_NNLS.png") ,dpi=600)

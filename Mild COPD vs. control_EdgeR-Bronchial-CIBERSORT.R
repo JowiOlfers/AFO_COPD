@@ -25,7 +25,7 @@ x <- readr::read_csv(
 array <- data.frame (x)
 
 y <- readr::read_csv(
-  file.path(data.dir, "bronchial clinical data_CD.csv"))
+  file.path(data.dir, "bronchial clinical data.csv"))
 s <- data.frame (y)
 
 row.names(array)=array[,1]
@@ -97,9 +97,9 @@ bronchialdata_DGEL$samples
 #count per million (cpm) read, also called normalized count
 normalized_counts <- cpm(bronchialdata_DGEL, log = TRUE)
 normalized_counts <- as.data.frame (normalized_counts)
-readr::write_csv(normalized_counts, 
+write.csv(normalized_counts, 
                  file = file.path (results.dir, "bronchial-log2CPM.mildvscontrol.csv"))
-readr::write_csv(normalized_counts, 
+write.csv(normalized_counts, 
                  file = file.path (results.dir, "bronchial-log2CPM.mildvscontrol.txt"))
 
 
@@ -162,8 +162,7 @@ tT1=merge(
   by.x = "row.names(results$table)",
   by.y ="ensembl_gene_id")
 
-rownames(tT1)=tT1[,1]
-#standard an error due to DUPLICATES:'ENSG00000187510', 'ENSG00000255374', 'ENSG00000276085
+
 names(tT1)[1] <- "ENSGid"
 tT1 <- tT1 [!(is.na(tT1$hgnc_symbol) | tT1$hgnc_symbol == ""), ]
 readr::write_csv(tT1, file = file.path (results.dir, "bronchial-mildCOPD.vs.control_CIBER.txt"))
@@ -176,13 +175,13 @@ readr::write_csv(tT2, file = file.path (results.dir, "bronchial-mildCOPD.vs.cont
 #names(tT3)[1] <- "ENSGid"
 #readr::write_csv(tT3, file = file.path (results.dir, "bronchial-mildCOPD.vs.control_CIBER_FDR0.01.txt"))
 
-tT4=tT1[which(tT1$PValue<0.01),]
-names(tT4)[1] <- "ENSGid"
-readr::write_csv(tT4, file = file.path (results.dir, "bronchial-mildCOPD.vs.control_CIBER_P0.01.txt"))
-
-tT5=tT1[which(tT1$PValue<0.001),]
-names(tT5)[1] <- "ENSGid"
-readr::write_csv(tT5, file = file.path (results.dir, "bronchial-mildCOPD.vs.control_CIBER_P0.001.txt"))
+#tT4=tT1[which(tT1$PValue<0.01),]
+#names(tT4)[1] <- "ENSGid"
+#readr::write_csv(tT4, file = file.path (results.dir, "bronchial-mildCOPD.vs.control_CIBER_P0.01.txt"))
+#
+#tT5=tT1[which(tT1$PValue<0.001),]
+#names(tT5)[1] <- "ENSGid"
+#readr::write_csv(tT5, file = file.path (results.dir, "bronchial-mildCOPD.vs.control_CIBER_P0.001.txt"))
 
 
 
@@ -215,7 +214,7 @@ tT1$label[match(tT1_gene, tT1$hgnc_symbol)] <- tT1_gene
 
 p <- ggscatter(tT1, x = "logFC", y = "logFDR", 
           color = "Group", 
-          palette = c("#2f5688","#BBBBBB","#CC0000"), 
+          palette = c("#013E80","#BBBBBB","#CC4D00"),
           size = 1,
           label = tT1$label, 
           font.label = 8, 
@@ -240,7 +239,7 @@ readr::write_csv(tT22, file = file.path (results.dir, "bronchial_down-DEGs_mild.
 
 tT23 <- rbind (tT21, tT22)
 dim (tT23)
-readr::write_csv(tT23, file = file.path (results.dir, "bronchial_allDEGs_mild.vs.controls-CIBER-FDR0.05FC2.csv"))
+readr::write_csv(tT23, file = file.path (results.dir, "bronchial_all-DEGs_mild.vs.controls-CIBER-FDR0.05FC2.csv"))
 
 #select top 20 - top 10 up and top 10 down regulated genes
 tT21 = arrange (tT21, desc(logFC))
@@ -256,24 +255,6 @@ tT222a = head(tT22[,1:7], 5)
 tT223a <- rbind (tT221a, tT222a)
 readr::write_csv(tT223a, file = file.path (results.dir, "bronchial_top10.DEGs_mild.vs.controls-CIBER-FDR0.05FC2.csv"))
 
-##exclude bronchial severe vs control DEGs (FDR 0.01 FC > 2 or < -2)
-#severevscontrol <- read.table("bronchial_allDEGs_severe.vs.controls-FDR0.01FC.csv")
-#severe_DEGs <- severevscontrol$hgnc_symbol
-#overlap <- intersect(tT33_all$hgnc_symbol, severe_DEGs)
-#tT33 <- tT33_all[ ! tT33_all$hgnc_symbol %in% overlap,]
-#dim (tT33)
-#write.table(tT33, "bronchial_all-excluded-DEGs_mild.vs.controls-CIBER-FDR0.01FC.csv")
-#
-#tT31 =tT33 [which(tT33$logFC >= 1),] 
-#dim (tT31)
-#write.table(tT31, "bronchial_excluded-up-DEGs_mild.vs.controls-CIBER-FDR0.01FC.csv")
-#
-#
-#tT32 =tT33[which(tT33$logFC <= -1), ]
-#dim (tT32)
-#write.table(tT32, "bronchial_excluded-down-DEGs_mild.vs.controls-CIBER-FDR0.01FC.csv")
-
-
 
 ########Create data.frame with normalized expression for genes with significant FC
 d <- normalized_counts
@@ -286,11 +267,11 @@ normalized_counts.FDRa <- merge(tT23a, normalized_counts2, by="ENSGid" )
 
 row.names(normalized_counts.FDR) <- normalized_counts.FDR$hgnc_symbol
 normalized_counts.FDR$LR <- normalized_counts.FDR$ENSGid <- normalized_counts.FDR$logFC <- normalized_counts.FDR$logCPM <- normalized_counts.FDR$FDR <- normalized_counts.FDR$PValue <- normalized_counts.FDR$hgnc_symbol <- NULL
-readr::write_csv(normalized_counts.FDR, file = file.path (results.dir, "bronchial-normalized_counts-CIBER-FDR0.05.mildvscontrol.csv"))
+write.csv(normalized_counts.FDR, file = file.path (results.dir, "bronchial-normalized_counts-CIBER-FDR0.05.mildvscontrol.csv"))
 
 row.names(normalized_counts.FDRa) <- normalized_counts.FDRa$hgnc_symbol
 normalized_counts.FDRa$LR <- normalized_counts.FDRa$ENSGid <- normalized_counts.FDRa$logFC <- normalized_counts.FDRa$logCPM <- normalized_counts.FDRa$FDR <- normalized_counts.FDRa$PValue <- normalized_counts.FDRa$hgnc_symbol <- NULL
-readr::write_csv(normalized_counts.FDRa, file = file.path (results.dir, "bronchial-normalized_counts.top20-CIBER-FDR0.05.mildvscontrol.csv"))
+write.csv(normalized_counts.FDRa, file = file.path (results.dir, "bronchial-normalized_counts.top20-CIBER-FDR0.05.mildvscontrol.csv"))
 
 
 
@@ -327,7 +308,7 @@ ph <- pheatmap(datax,
               annotation_names_col = F,
               number_format="%.2e",
               border="white",  
-              color=colorRampPalette(c("navy", "white", "red"))(100),
+              color=colorRampPalette(c("#013E80", "white", "orangered"))(100),
               border_color=NA, 
               cellwidth = 18,cellheight = 11, 
               cluster_cols = F, 

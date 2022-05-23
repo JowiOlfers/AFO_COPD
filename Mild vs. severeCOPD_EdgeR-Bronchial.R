@@ -99,9 +99,9 @@ bronchialdata_DGEL$samples
 #count per million (cpm) read
 normalized_counts <- cpm(bronchialdata_DGEL, log = TRUE)
 normalized_counts <- as.data.frame (normalized_counts)
-readr::write_csv(normalized_counts, 
+write.csv(normalized_counts, 
                  file = file.path (results.dir, "bronchial-log2CPM.mildvssevere.csv"))
-readr::write_csv(normalized_counts, 
+write.csv(normalized_counts, 
                  file = file.path (results.dir, "bronchial-log2CPM.mildvssevere.txt"))
 
 
@@ -164,8 +164,6 @@ tT1=merge(
   by.y ="ensembl_gene_id")
 
 
-rownames(tT1)=tT1[,1]
-#standard an error due to DUPLICATES:'ENSG00000187510', 'ENSG00000255374' and 'ENSG00000276085' 
 names(tT1)[1] <- "ENSGid"
 tT1 <- tT1 [!(is.na(tT1$hgnc_symbol) | tT1$hgnc_symbol == ""), ]
 readr::write_csv(tT1, file = file.path (results.dir, "bronchial-mildCOPD.vs.severe.txt"))
@@ -174,18 +172,17 @@ tT2=tT1[which(tT1$FDR<0.05),]
 names(tT2)[1] <- "ENSGid"
 readr::write_csv(tT2, file = file.path (results.dir, "bronchial-mildCOPD.vs.severe_FDR0.05.txt"))
 
-tT3=tT1[which(tT1$FDR<0.01),]
-names(tT3)[1] <- "ENSGid"
-readr::write_csv(tT3, file = file.path (results.dir, "bronchial-mildCOPD.vs.severe_FDR0.01.txt"))
-
-tT4=tT1[which(tT1$PValue<0.01),]
-names(tT4)[1] <- "ENSGid"
-readr::write_csv(tT4, file = file.path (results.dir, "bronchial-mildCOPD.vs.severe_P0.01.txt"))
-
-tT5=tT1[which(tT1$PValue<0.001),]
-names(tT5)[1] <- "ENSGid"
-readr::write_csv(tT5, file = file.path (results.dir, "bronchial-mildCOPD.vs.severe_P0.001.txt"))
-
+#tT3=tT1[which(tT1$FDR<0.01),]
+#names(tT3)[1] <- "ENSGid"
+#readr::write_csv(tT3, file = file.path (results.dir, "bronchial-mildCOPD.vs.severe_FDR0.01.txt"))
+#
+#tT4=tT1[which(tT1$PValue<0.01),]
+#names(tT4)[1] <- "ENSGid"
+#readr::write_csv(tT4, file = file.path (results.dir, "bronchial-mildCOPD.vs.severe_P0.01.txt"))
+#
+#tT5=tT1[which(tT1$PValue<0.001),]
+#names(tT5)[1] <- "ENSGid"
+#readr::write_csv(tT5, file = file.path (results.dir, "bronchial-mildCOPD.vs.severe_P0.001.txt"))
 
 
 
@@ -263,24 +260,6 @@ readr::write_csv(tT223a, file = file.path (results.dir, "bronchial_top10.DEGs_mi
 
 
 
-#exclude bronchial mild  vs control DEGs (FDR 0.01 FC > 2 or < -2)
-#mildvscontrol <- read.table("bronchial_allDEGs_mild.vs.mild-FDR0.01FC.csv")
-#mild_DEGs <- mildvscontrol$hgnc_symbol
-#overlap <- intersect(tT33_all$hgnc_symbol, mild_DEGs)
-#tT33 <- tT33_all[ ! tT33_all$hgnc_symbol %in% overlap,]
-#dim (tT33)
-#write.table(tT33, "bronchial_all-excluded-DEGs_mildvssevere-FDR0.01FC.csv")
-#
-#tT31 =tT33 [which(tT33$logFC >= 1),] 
-#dim (tT31)
-#write.table(tT31, "bronchial_excluded-up-DEGs_mildvssevere-FDR0.01FC.csv")
-#
-#tT32 =tT33[which(tT33$logFC <= -1), ]
-#dim (tT32)
-#write.table(tT32, "bronchial_excluded-down-DEGs_mildvssevere-FDR0.01FC.csv")
-
-
-
 ########Create data.frame with normalized expression for genes with significant FC
 d <- normalized_counts
 ENSGid <- rownames(d)
@@ -292,11 +271,11 @@ normalized_counts.FDRa <- merge(tT23a, normalized_counts2, by="ENSGid" )
 
 row.names(normalized_counts.FDR) <- normalized_counts.FDR$hgnc_symbol
 normalized_counts.FDR$LR <- normalized_counts.FDR$ENSGid <- normalized_counts.FDR$logFC <- normalized_counts.FDR$logCPM <- normalized_counts.FDR$FDR <- normalized_counts.FDR$PValue <- normalized_counts.FDR$hgnc_symbol <- NULL
-readr::write_csv(normalized_counts.FDR, file = file.path (results.dir, "bronchial-normalized_counts.FDR0.05.mildvssevere.csv"))
+write.csv(normalized_counts.FDR, file = file.path (results.dir, "bronchial-normalized_counts.FDR0.05.mildvssevere.csv"))
 
 row.names(normalized_counts.FDRa) <- normalized_counts.FDRa$hgnc_symbol
 normalized_counts.FDRa$LR <- normalized_counts.FDRa$ENSGid <- normalized_counts.FDRa$logFC <- normalized_counts.FDRa$logCPM <- normalized_counts.FDRa$FDR <- normalized_counts.FDRa$PValue <- normalized_counts.FDRa$hgnc_symbol <- NULL
-readr::write_csv(normalized_counts.FDR, file = file.path (results.dir, "bronchial-normalized_counts.top20-FDR0.05.mildvssevere.csv"))
+write.csv(normalized_counts.FDRa, file = file.path (results.dir, "bronchial-normalized_counts.top20-FDR0.05.mildvssevere.csv"))
 
 
 #####################heatmap

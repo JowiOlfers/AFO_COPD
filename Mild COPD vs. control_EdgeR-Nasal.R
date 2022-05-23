@@ -25,7 +25,7 @@ x <- readr::read_csv(
 array <- data.frame (x)
 
 y <- readr::read_csv(
-  file.path(data.dir, "nasal clinical data_CD.csv"))
+  file.path(data.dir, "nasal clinical data.csv"))
 s <- data.frame (y)
 
 row.names(array)=array[,1]
@@ -103,9 +103,10 @@ nasaldata_DGEL$samples
 #count per million (cpm) read
 normalized_counts <- cpm(nasaldata_DGEL, log = TRUE)
 normalized_counts <- as.data.frame (normalized_counts)
-readr::write_csv(normalized_counts, 
+
+write.csv(normalized_counts, 
   file = file.path (results.dir, "nasal-log2CPM.mildvscontrol.csv"))
-readr::write_csv(normalized_counts, 
+write.csv(normalized_counts, 
   file = file.path (results.dir, "nasal-log2CPM.mildvscontrol.txt"))
 
 
@@ -167,15 +168,13 @@ tT1=merge(
   by.x = "row.names(results$table)",
   by.y ="ensembl_gene_id")
 
-rownames(tT1)=tT1[,1]
-#standard an error due to DUPLICATES:'ENSG00000187510', 'ENSG00000255374' and ENSG00000276085
 names(tT1)[1] <- "ENSGid"
 tT1 <- tT1 [!(is.na(tT1$hgnc_symbol) | tT1$hgnc_symbol == ""), ]
 readr::write_csv(tT1, file = file.path (results.dir, "nasal-mildCOPD.vs.control.txt"))
 
 tT2=tT1[which(tT1$FDR<0.05),]
 names(tT2)[1] <- "ENSGid"
-readr::write_csv(tT2, file = file.path (results.dir, "nasal-mildCOPD.vs.control_FDR0.05.txt"))
+#readr::write_csv(tT2, file = file.path (results.dir, "nasal-mildCOPD.vs.control_FDR0.05.txt"))
 
 #FDR 0.25 again 0 DEG
 
@@ -226,7 +225,7 @@ tT1$label[match(tT1_gene, tT1$hgnc_symbol)] <- tT1_gene
 
 p <- ggscatter(tT1, x = "logFC", y = "logFDR", 
           color = "Group", 
-          palette = c("#2f5688","#BBBBBB","#CC0000"), 
+          palette = c("#013E80","#BBBBBB","#CC4D00"),
           size = 1,
           label = tT1$label, 
           font.label = 8, 
@@ -235,7 +234,7 @@ p <- ggscatter(tT1, x = "logFC", y = "logFDR",
   geom_hline(yintercept = -log10(0.5),linetype="dashed")+
   geom_vline(xintercept = 0,linetype="dashed")
 p
-ggsave (filename = file.path (results.dir.img, "Volcano-WC-mildvscontrol-FDR-0.5.png"), width=25,height=25,units="cm",dpi=600 )
+ggsave (filename = file.path (results.dir.img, "Volcano-mildvscontrol-FDR-0.5.png"), width=25,height=25,units="cm",dpi=600 )
 ggsave (filename = file.path (results.dir.img, "gene_diff-mildvscontrol-FDR-0.5.pdf"), width=25,height=25,units="cm")
 
 
@@ -264,7 +263,7 @@ tT1$labelP[match(tT1_geneP, tT1$hgnc_symbol)] <- tT1_geneP
 
 p1 <- ggscatter(tT1, x = "logFC", y = "logPValue", 
                color = "GroupP", 
-               palette = c("#2f5688","#BBBBBB","#CC0000"), 
+               palette = c("#013E80","#BBBBBB","#CC4D00"),
                size = 1,
                label = tT1$labelP, 
                font.label = 8, 
@@ -273,23 +272,23 @@ p1 <- ggscatter(tT1, x = "logFC", y = "logPValue",
   geom_hline(yintercept = -log10(0.001),linetype="dashed")+
   geom_vline(xintercept = 0,linetype="dashed")
 p1
-ggsave (filename = file.path (results.dir.img, "Volcano-WC-mildvscontrol-PValue.png"), width=30,height=30,units="cm",dpi=600 )
+ggsave (filename = file.path (results.dir.img, "Volcano-mildvscontrol-PValue.png"), width=30,height=30,units="cm",dpi=600 )
 ggsave (filename = file.path (results.dir.img, "gene_diff-mildvscontrol-PValue.pdf"), width=25,height=30,units="cm")
 
 
 
-#select up and down regulated genes with P < 0.001 and FC > 2 or < -2
+#select up and down regulated genes with P < 0.001 and FC > 0 or < 0
 tT61=tT6[which(tT6$logFC > 0),] 
 dim (tT61)
-readr::write_csv(tT61, file = file.path (results.dir, "nasal_up-DEGs_mild.vs.controls-P0.001FC2.csv"))
+readr::write_csv(tT61, file = file.path (results.dir, "nasal_up-DEGs_mild.vs.controls-P0.001.csv"))
 
 tT62=tT6[which(tT6$logFC < 0), ]
 dim (tT62)
-readr::write_csv(tT62, file = file.path (results.dir, "nasal_down-DEGs_mild.vs.controls-P0.001FC2.csv"))
+readr::write_csv(tT62, file = file.path (results.dir, "nasal_down-DEGs_mild.vs.controls-P0.001.csv"))
 
 tT63 <- rbind (tT61, tT62)
 dim (tT63)
-readr::write_csv(tT63, file = file.path (results.dir, "nasal_allDEGs_mild.vs.controls-P0.001FC2.csv"))
+readr::write_csv(tT63, file = file.path (results.dir, "nasal_all-DEGs_mild.vs.controls-P0.001.csv"))
 
 #select top 20 - top 10 up and top 10 down regulated genes
 library(dplyr)
@@ -310,7 +309,7 @@ normalized_counts2 <- cbind (ENSGid, d)
 normalized_counts.P0.001 <- merge(tT6, normalized_counts2, by="ENSGid" )
 row.names(normalized_counts.P0.001) <- normalized_counts.P0.001$hgnc_symbol
 normalized_counts.P0.001$LR <- normalized_counts.P0.001$ENSGid <- normalized_counts.P0.001$logFC <- normalized_counts.P0.001$logCPM <- normalized_counts.P0.001$FDR <- normalized_counts.P0.001$PValue <- normalized_counts.P0.001$hgnc_symbol <- NULL 
-readr::write_csv(normalized_counts.P0.001, file = file.path (results.dir, "nasal-normalized_counts.P0.001.mildvscontrol.csv"))
+write.csv(normalized_counts.P0.001, file = file.path (results.dir, "nasal-normalized_counts.P0.001.mildvscontrol.csv"))
 
 
 #####################heatmap
@@ -346,7 +345,7 @@ ph <- pheatmap(datax,
               annotation_names_col = F,
               number_format="%.2e",
               border="white",  
-              color=colorRampPalette(c("navy", "white", "red"))(100),
+              color=colorRampPalette(c("#013E80", "white", "orangered"))(100),
               border_color=NA, 
               cellwidth = 15,cellheight = 30, 
               cluster_cols = F, 

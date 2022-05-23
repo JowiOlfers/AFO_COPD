@@ -25,7 +25,7 @@ x <- readr::read_csv(
 array <- data.frame (x)
 
 y <- readr::read_csv(
-  file.path(data.dir, "nasal clinical data_CD.csv"))
+  file.path(data.dir, "nasal clinical data.csv"))
 s <- data.frame (y)
 
 row.names(array)=array[,1]
@@ -61,15 +61,6 @@ gender=as.factor(samplesToUse$gender)
 packyears=as.numeric(samplesToUse$packyears)
 years.cessation=as.numeric(samplesToUse$years.of.cessation)
 
-#CD method: CIBERSORT
-#proportion_dendritic=as.numeric(samplesToUse$proportion_ciber_Dendritic)
-#proportion_goblet1N=as.numeric(samplesToUse$proportion_ciber_Goblet_1N)
-
-#CD method: NNLS
-#proportion_basal=as.numeric(samplesToUse$proportion_nnls_Basal)
-#proportion_fibro=as.numeric(samplesToUse$proportion_nnls_Fibroblasts)
-#proportion_goblet1N=as.numeric(samplesToUse$proportion_nnls_Goblet_1N)
-
 
 ###replace years.cessation NA with average value of corresponding group
 df = data.frame(years.cessation, group)
@@ -103,6 +94,7 @@ nasaldata_DGEL <- total_nasaldata_DGEL[keep,, keep.lib.sizes=FALSE]
 dim(nasaldata_DGEL)
 nasaldata_DGEL$samples
 
+
 ################Normalization - TMM
 nasaldata_DGEL <- calcNormFactors(nasaldata_DGEL, method="TMM")
 nasaldata_DGEL$samples
@@ -112,17 +104,16 @@ nasaldata_DGEL$samples
 #count per million (cpm) read
 normalized_counts <- cpm(nasaldata_DGEL, log = TRUE)
 normalized_counts <- as.data.frame (normalized_counts)
-readr::write_csv(normalized_counts, 
-                 file = file.path (results.dir, "nasal-log2CPM.severevscontrol.csv"))
-readr::write_csv(normalized_counts, 
-                 file = file.path (results.dir, "nasal-log2CPM.severevscontrol.txt"))
 
+write.csv(normalized_counts, 
+          file = file.path (results.dir, "nasal-log2CPM.severevscontrol.csv"))
+write.csv(normalized_counts, 
+          file = file.path (results.dir, "nasal-log2CPM.severevscontrol.txt"))
 
 
 
 ##############Differential expression analysis
 design <- model.matrix(~group + age + gender + packyears + years.of.cessation)
-#+ proportion_dendritic + proportion_goblet1N)
 nasaldata_DGEL <- estimateDisp(nasaldata_DGEL, design)
 #plotBCV(nasaldata_DGEL)
 
@@ -179,8 +170,6 @@ tT1=merge(
   by.y ="ensembl_gene_id")
 
 
-rownames(tT1)=tT1[,1]
-#standard an error due to DUPLICATES:'ENSG00000187510', 'ENSG00000276085'  and 'ENSG00000255374'
 names(tT1)[1] <- "ENSGid"
 tT1 <- tT1 [!(is.na(tT1$hgnc_symbol) | tT1$hgnc_symbol == ""), ]
 #tT1 <- tT1 [!(tT1$hgnc_symbol == "CCL3L3"), ]
@@ -190,9 +179,9 @@ tT2=tT1[which(tT1$FDR<0.05), ]
 names(tT2)[1] <- "ENSGid"
 readr::write_csv(tT2, file = file.path (results.dir, "nasal-severeCOPD.vs.control_FDR0.05.txt"))
 
-tT3=tT1[which(tT1$FDR<0.01), ]
-names(tT3)[1] <- "ENSGid"
-readr::write_csv(tT3, file = file.path (results.dir, "nasal-severeCOPD.vs.control_FDR0.01.txt"))
+#tT3=tT1[which(tT1$FDR<0.01), ]
+#names(tT3)[1] <- "ENSGid"
+#readr::write_csv(tT3, file = file.path (results.dir, "nasal-severeCOPD.vs.control_FDR0.01.txt"))
 
 #tT4=tT1[which(tT1$PValue<0.05),]
 #names(tT4)[1] <- "ENSGid"
@@ -201,10 +190,6 @@ readr::write_csv(tT3, file = file.path (results.dir, "nasal-severeCOPD.vs.contro
 #tT5=tT1[which(tT1$PValue<0.01),]
 #names(tT5)[1] <- "ENSGid"
 #readr::write_csv(tT5, file = file.path (results.dir, "nasal-severeCOPD.vs.control_P0.01.txt"))
-
-#tT6=tT1[which(tT1$PValue<0.001),]
-#names(tT6)[1] <- "ENSGid"
-#readr::write_csv(tT6, file = file.path (results.dir, "nasal-severeCOPD.vs.control_P0.001.txt"))
 
 
 
@@ -237,7 +222,7 @@ tT1$label[match(tT1_gene, tT1$hgnc_symbol)] <- tT1_gene
 
 p <- ggscatter(tT1, x = "logFC", y = "logFDR", 
                color = "Group", 
-               palette = c("#2f5688","#BBBBBB","#CC0000"), 
+               palette = c("#013E80","#BBBBBB","#CC4D00"),
                size = 1,
                label = tT1$label, 
                font.label = 8, 
@@ -262,7 +247,7 @@ readr::write_csv(tT22, file = file.path (results.dir, "nasal_down-DEGs_severe.vs
 
 tT23 <- rbind (tT21, tT22)
 dim (tT23)
-readr::write_csv(tT23, file = file.path (results.dir, "nasal_allDEGs_severe.vs.controls-FDR0.05FC2.csv"))
+readr::write_csv(tT23, file = file.path (results.dir, "nasal_all-DEGs_severe.vs.controls-FDR0.05FC2.csv"))
 
 #select top 20 - FDR < 0.05
 tT21 = arrange (tT21, desc(logFC))
@@ -312,7 +297,7 @@ normalized_counts.FDRa <- merge(tT23a, normalized_counts2, by="ENSGid" )
 
 row.names(normalized_counts.FDR) <- normalized_counts.FDR$hgnc_symbol
 normalized_counts.FDR$LR <- normalized_counts.FDR$ENSGid <- normalized_counts.FDR$logFC <- normalized_counts.FDR$logCPM <- normalized_counts.FDR$FDR <- normalized_counts.FDR$PValue <- normalized_counts.FDR$hgnc_symbol <- NULL
-readr::write_csv(normalized_counts.FDR, file = file.path (results.dir, "nasal-normalized_counts.FDR0.05.severevscontrol.csv"))
+write.csv(normalized_counts.FDR, file = file.path (results.dir, "nasal-normalized_counts.FDR0.05.severevscontrol.csv"))
 
 ####normalized_counts.FDRa - tT23a
 ##error: row.names duplicate 'POLR2J4'and. 'TBCE'.
@@ -324,7 +309,7 @@ readr::write_csv(normalized_counts.FDR, file = file.path (results.dir, "nasal-no
 
 row.names(normalized_counts.FDRa) <- normalized_counts.FDRa$hgnc_symbol
 normalized_counts.FDRa$LR <- normalized_counts.FDRa$ENSGid <- normalized_counts.FDRa$logFC <- normalized_counts.FDRa$logCPM <- normalized_counts.FDRa$FDR <- normalized_counts.FDRa$PValue <- normalized_counts.FDRa$hgnc_symbol <- NULL
-readr::write_csv(normalized_counts.FDRa, file = file.path (results.dir, "nasal-normalized_counts.top20-FDR0.05.severevscontrol.csv"))
+write.csv(normalized_counts.FDRa, file = file.path (results.dir, "nasal-normalized_counts.top20-FDR0.05.severevscontrol.csv"))
 
 
 
@@ -361,7 +346,7 @@ ph <- pheatmap(datax,
               annotation_names_col = F,
               number_format="%.2e",
               border="white",  
-              color=colorRampPalette(c("navy", "white", "red"))(100),
+              color=colorRampPalette(c("#013E80", "white", "orangered"))(100),
               border_color=NA, 
               cellwidth = 9,cellheight = 20, 
               cluster_cols = F, 

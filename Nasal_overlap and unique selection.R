@@ -10,63 +10,48 @@ results.dir.img <- file.path(results.dir, "img")
 
 ### Mild COPD vs. control
 #FDR 0.5
-x <-readr::read_csv(
-  file.path(data.dir, "nasal-mildCOPD.vs.control_FDR0.5.txt"))
-df1a <- data.frame(x)
+#x <-readr::read_csv(
+#  file.path(data.dir, "nasal-mildCOPD.vs.control_FDR0.5.txt"))
+#df1a <- data.frame(x)
 
-tT1a <- select(df1a, hgnc_symbol, logFC, FDR)
-df1a_pos = tT1a[which(tT1a$logFC > 0),]
-df1a_pos_list <- df1a_pos [,-2:-3]
-df1a_neg = tT1a[which(tT1a$logFC < 0),]
-df1a_neg_list <- df1a_neg [,-2:-3]
+#tT1a <- select(df1a, hgnc_symbol, logCPM, logFC, FDR)
+#df1a_pos = tT1a[which(tT1a$logFC > 0),]
+#df1a_pos_list <- df1a_pos [,-2:-4]
+#df1a_neg = tT1a[which(tT1a$logFC < 0),]
+#df1a_neg_list <- df1a_neg [,-2:-4]
 
-df1a <- rbind (df1a_pos, df1a_neg)
-df1a_list <- df1a [,-2:-3]
+#df1a <- rbind (df1a_pos, df1a_neg)
+#df1a_list <- df1a [,-2:-4]
 
-
-#P<0.001
-x <-readr::read_csv(
-  file.path(data.dir, "nasal-mildCOPD.vs.control_P0.001.txt"))
-df1b <- data.frame(x)
-
-tT1b <- select(df1b, hgnc_symbol, logFC, FDR)
-df1b_pos = tT1b[which(tT1b$logFC > 0),]
-df1b_pos_list <- df1b_pos [,-2:-3]
-df1b_neg = tT1b[which(tT1b$logFC < 0),]
-df1b_neg_list <- df1b_neg [,-2:-3]
-
-df1b <- rbind (df1b_pos, df1b_neg)
-df1b_list <- df1b [,-2:-3]
 
 
 ### Severe COPD vs. controls 
 x <-readr::read_csv(
-  file.path(data.dir, "nasal-severeCOPD.vs.control_FDR0.05.txt"))
+  file.path(data.dir, "nasal_all-DEGs_severe.vs.controls-FDR0.05FC2.csv"))
 table2 <- data.frame(x)
 
-tT2 <- select(table2, hgnc_symbol, logFC, FDR)
-df2_pos = tT2[which(tT2$logFC > 1),]
-df2_pos_list <- df2_pos [,-2:-3]
-df2_neg = tT2[which(tT2$logFC < -1),]
-df2_neg_list <- df2_neg [,-2:-3]
+df2 <- select(table2, hgnc_symbol, logCPM, logFC, FDR)
+df2_list <- df2 [,-2:-4]
 
-df2 <- rbind (df2_pos, df2_neg)
-df2_list <- df2 [,-2:-3]
+df2_pos = df2[which(df2$logFC >= 1),]
+df2_pos_list <- df2_pos [,-2:-4]
+df2_neg = df2[which(df2$logFC <= -1),]
+df2_neg_list <- df2_neg [,-2:-4]
 
 
 ### Severe vs. mild COPD 
 x <-readr::read_csv(
-  file.path(data.dir, "nasal-severe.vs.mildCOPD_FDR0.05.txt"))
+  file.path(data.dir, "nasal_all-DEGs_severe.vs.mildCOPD-FDR0.05FC2.csv"))
 table3 <- data.frame(x)
 
-tT3 <- select(table3, hgnc_symbol, logFC, FDR)
-df3_pos = tT3[which(tT3$logFC > 1),]
-df3_pos_list <- df3_pos [,-2:-3]
-df3_neg = tT3[which(tT3$logFC < -1),]
-df3_neg_list <- df3_neg [,-2:-3]
+df3 <- select(table3, hgnc_symbol, logCPM, logFC, FDR)
+df3_list <- df3 [,-2:-4]
 
-df3 <- rbind (df3_pos, df3_neg)
-df3_list <- df3 [,-2:-3]
+df3_pos = df3[which(df3$logFC >= 1),]
+df3_pos_list <- df3_pos [,-2:-4]
+df3_neg = df3[which(df3$logFC <= -1),]
+df3_neg_list <- df3_neg [,-2:-4]
+
 
 
 
@@ -111,18 +96,19 @@ venn.diagram(
   main.fontface = "bold",
   main.fontfamily = "sans", 
   main.cex = .4,
-  fill = c(alpha("#87CEEB",0.3), alpha('#FFFF66',0.3)),
+  fill = c(alpha("#CCEAF7"), alpha('#E3D0FC')),
   cex = .4,
   fontface = "bold", 
   fontfamily = "sans",
   cat.cex = 0.35,
   cat.fontface = "bold",
   cat.default.pos = "outer",
-  cat.pos = c(195, -205),
-  cat.dist = c(0.030, 0.040),
+  cat.pos = c(185, -205),
+  cat.dist = c(0.03, 0.045),
   cat.fontfamily = "sans",
   filename =  file.path (results.dir.img, "SevereCOPD_venndiagram.png")
 )
+
 
 
 venn.diagram(
@@ -137,15 +123,15 @@ venn.diagram(
   main.fontface = "bold",
   main.fontfamily = "sans", 
   main.cex = .4,
-  fill = c(alpha("#87CEEB",0.3), alpha('#FFFF66',0.3)),
+  fill = c(alpha("#CCEAF7"), alpha('#E3D0FC')),
   cex = .4,
   fontface = "bold", 
   fontfamily = "sans",
   cat.cex = 0.35,
   cat.fontface = "bold",
   cat.default.pos = "outer",
-  cat.pos = c(195, -205),
-  cat.dist = c(0.030, 0.040),
+  cat.pos = c(185, -205),
+  cat.dist = c(0.030, 0.045),
   cat.fontfamily = "sans",
   filename =  file.path (results.dir.img, "Up-regulated_severeCOPD_venndiagram.png")
 )
@@ -163,15 +149,15 @@ venn.diagram(
   main.fontface = "bold",
   main.fontfamily = "sans", 
   main.cex = .4,
-  fill = c(alpha("#87CEEB",0.3), alpha('#FFFF66',0.3)),
+  fill = c(alpha("#CCEAF7"), alpha('#E3D0FC')),
   cex = .4,
   fontface = "bold", 
   fontfamily = "sans",
   cat.cex = 0.35,
   cat.fontface = "bold",
   cat.default.pos = "outer",
-  cat.pos = c(195, -205),
-  cat.dist = c(0.030, 0.040),
+  cat.pos = c(185, -205),
+  cat.dist = c(0.030, 0.045),
   cat.fontfamily = "sans",
   filename =  file.path (results.dir.img, "Down-regulated_severeCOPD_venndiagram.png")
 )
